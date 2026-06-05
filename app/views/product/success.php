@@ -1,179 +1,332 @@
-<?php include dirname(dirname(__DIR__)) . '/shares/header.php'; 
+<?php include dirname(dirname(__DIR__)) . '/shares/header.php';
 $order = $_SESSION['order_success'] ?? null;
 if (!$order) {
-    header('Location: /bai1/Product/');
+    header('Location: ' . BASE_URL . 'Product');
     return;
 }
 ?>
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-lg rounded-lg overflow-hidden bg-white">
-                
-                <!-- Success Header -->
-                <div class="text-white text-center py-5 position-relative" style="background: linear-gradient(135deg, #0d2816 0%, #28a745 100%);">
-                    <div style="position: absolute; width: 300px; height: 300px; background: rgba(255,255,255,0.03); border-radius: 50%; top: -100px; right: -50px; pointer-events: none;"></div>
-                    <div style="position: absolute; width: 150px; height: 150px; background: rgba(255,255,255,0.04); border-radius: 50%; bottom: -50px; left: 5%; pointer-events: none;"></div>
-                    
-                    <div class="position-relative" style="z-index: 2;">
-                        <!-- Animated Checkmark Icon using CSS -->
-                        <div class="checkmark-wrapper mb-4">
-                            <div class="checkmark-circle">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <h2 class="font-weight-bold mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
-                        <p class="lead mb-0 text-light" style="opacity: 0.9;">Cảm ơn bạn đã tin tưởng lựa chọn mua sắm tại Fruit Store.</p>
-                    </div>
+<style>
+/* ── Success page styles ── */
+.success-wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Hero banner */
+.success-hero {
+    background: linear-gradient(135deg, #0a3d1e 0%, #1a6b36 50%, #0d2816 100%);
+    border: 1px solid rgba(0,208,132,0.2);
+    border-radius: 20px 20px 0 0;
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.success-hero::before {
+    content: '';
+    position: absolute;
+    width: 350px; height: 350px;
+    background: rgba(0,208,132,0.05);
+    border-radius: 50%;
+    top: -150px; right: -80px;
+    pointer-events: none;
+}
+.success-hero::after {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    background: rgba(251,191,36,0.04);
+    border-radius: 50%;
+    bottom: -80px; left: 5%;
+    pointer-events: none;
+}
+
+.checkmark-circle {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: rgba(0,208,132,0.15);
+    border: 3px solid var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 0 40px rgba(0,208,132,0.3);
+    animation: popIn 0.55s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+}
+.checkmark-circle i {
+    font-size: 38px;
+    color: var(--primary);
+    animation: fadeCheck 0.3s ease 0.45s both;
+}
+@keyframes popIn {
+    0%   { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fadeCheck {
+    0%   { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Card body */
+.success-body {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    padding: 2rem 2.5rem;
+}
+@media (max-width: 576px) { .success-body { padding: 1.5rem 1rem; } }
+
+/* Order ID badge */
+.order-id-badge {
+    display: inline-block;
+    background: rgba(0,208,132,0.1);
+    border: 1px solid rgba(0,208,132,0.3);
+    border-radius: 999px;
+    padding: 0.4rem 1.4rem;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary);
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+}
+.order-id-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+/* Info table */
+.info-section-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.info-table { width: 100%; }
+.info-table tr { border-bottom: 1px solid var(--border-card); }
+.info-table tr:last-child { border-bottom: none; }
+.info-table td, .info-table th {
+    padding: 0.75rem 0.6rem;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+.info-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    width: 38%;
+    white-space: nowrap;
+}
+.info-table td {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Payment method badge */
+.pay-badge-cod {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,208,132,0.1);
+    border: 1px solid rgba(0,208,132,0.25);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.pay-badge-bank {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--info);
+}
+
+/* Total amount */
+.total-row td {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent) !important;
+}
+
+/* Bank transfer card */
+.bank-card {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem;
+    margin: 1.5rem 0;
+}
+.bank-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--info);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 6px;
+}
+.bank-info-list { list-style: none; padding: 0; margin: 0; }
+.bank-info-list li {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    padding: 0.3rem 0;
+    display: flex; gap: 6px;
+}
+.bank-info-list li span { color: var(--text-primary); font-weight: 600; }
+.bank-info-list li .highlight { color: var(--danger); font-weight: 800; }
+
+/* QR box */
+.qr-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+.qr-box i { color: var(--text-secondary); opacity: 0.6; }
+.qr-box small { color: var(--text-muted); font-size: 10px; display: block; margin-top: 6px; }
+
+/* Note box */
+.note-box {
+    background: rgba(0,208,132,0.05);
+    border: 1px solid rgba(0,208,132,0.15);
+    border-radius: 12px;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 1.5rem 0;
+}
+</style>
+
+<div class="container py-5 fade-in-up">
+    <div class="success-wrapper">
+
+        <!-- Hero -->
+        <div class="success-hero">
+            <div style="position: relative; z-index: 2;">
+                <div class="checkmark-circle">
+                    <i class="fas fa-check"></i>
                 </div>
-
-                <!-- Invoice Content -->
-                <div class="card-body p-5 bg-white">
-                    <div class="text-center mb-4 pb-3 border-bottom">
-                        <span class="text-muted d-block small mb-1">MÃ ĐƠN HÀNG CỦA BẠN</span>
-                        <h4 class="font-weight-bold text-success">#FS-<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?></h4>
-                    </div>
-
-                    <h5 class="text-dark font-weight-bold mb-3"><i class="fas fa-file-invoice text-success mr-2"></i>Thông tin hóa đơn đặt hàng</h5>
-                    <div class="table-responsive mb-4">
-                        <table class="table table-bordered table-striped rounded-lg overflow-hidden">
-                            <tbody>
-                                <tr>
-                                    <th scope="row" class="bg-light font-weight-bold text-dark" style="width: 35%;">Khách hàng:</th>
-                                    <td class="text-dark font-weight-bold"><?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" class="bg-light font-weight-bold text-dark">Số điện thoại:</th>
-                                    <td class="text-dark"><?php echo htmlspecialchars($order['phone'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" class="bg-light font-weight-bold text-dark">Địa chỉ nhận hàng:</th>
-                                    <td class="text-dark"><?php echo htmlspecialchars($order['address'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" class="bg-light font-weight-bold text-dark">Thanh toán qua:</th>
-                                    <td class="text-dark font-weight-bold text-uppercase">
-                                        <?php 
-                                        if ($order['payment_method'] === 'cod') {
-                                            echo '<span class="badge badge-success px-3 py-2 rounded-pill"><i class="fas fa-money-bill-wave mr-1 text-warning"></i> COD (Khi nhận hàng)</span>';
-                                        } else {
-                                            echo '<span class="badge badge-info px-3 py-2 rounded-pill"><i class="fas fa-university mr-1 text-warning"></i> Chuyển khoản ngân hàng</span>';
-                                        }
-                                        ?>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" class="bg-light font-weight-bold text-dark">Tổng giá trị đơn hàng:</th>
-                                    <td class="text-danger font-weight-bold text-lg" style="font-size: 1.15rem;">
-                                        <?php echo number_format($order['total_price'], 0, ',', '.'); ?> đ
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Payment Bank Details if Bank Transfer -->
-                    <?php if ($order['payment_method'] === 'bank_transfer'): ?>
-                        <div class="card border-info rounded-lg bg-light p-4 mb-4" style="border-radius: 15px !important; border-left: 5px solid #17a2b8 !important;">
-                            <h6 class="text-info font-weight-bold mb-3"><i class="fas fa-university mr-2"></i>Thông tin chuyển khoản ngân hàng</h6>
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <ul class="list-unstyled mb-0 font-weight-bold text-secondary small" style="line-height: 1.8;">
-                                        <li>Ngân hàng: <span class="text-dark">MB BANK (Ngân hàng Quân Đội)</span></li>
-                                        <li>Số tài khoản: <span class="text-danger font-weight-bold">0988 888 888 888</span></li>
-                                        <li>Chủ tài khoản: <span class="text-dark">CONG TY FRUIT STORE VIET NAM</span></li>
-                                        <li>Số tiền: <span class="text-danger font-weight-bold"><?php echo number_format($order['total_price'], 0, ',', '.'); ?> đ</span></li>
-                                        <li>Nội dung chuyển khoản: <span class="text-info">FS <?php echo $order['order_id']; ?></span></li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-4 text-center mt-3 mt-md-0 border-left-0 border-md-left">
-                                    <div class="p-2 bg-white rounded border d-inline-block shadow-sm">
-                                        <i class="fas fa-qrcode fa-5x text-dark" style="opacity: 0.85;"></i>
-                                        <span class="d-block small text-muted font-weight-bold mt-1" style="font-size: 9px;">QUÉT MÃ QR MB BANK</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="p-3 bg-light rounded-lg border text-center text-secondary small mb-4" style="border-radius: 12px !important; line-height: 1.5;">
-                        <i class="fas fa-check-circle text-success mr-1"></i> Nhân viên chăm sóc khách hàng của Fruit Store sẽ liên hệ qua điện thoại để xác nhận lại đơn hàng trong vòng 10 phút.
-                    </div>
-
-                    <!-- Footer Actions -->
-                    <div class="text-center pt-2">
-                        <a href="<?= BASE_URL ?>Product/" class="btn btn-success btn-lg font-weight-bold px-5 py-3 rounded-pill shadow-sm hover-up" style="transition: all 0.25s;">
-                            <i class="fas fa-shopping-basket mr-2"></i>Quay lại trang sản phẩm
-                        </a>
-                    </div>
-                </div>
-
+                <h2 class="font-weight-bold mb-2" style="color: #fff; font-family: var(--font-heading); font-size: 1.8rem; letter-spacing: -0.5px;">
+                    ĐẶT HÀNG THÀNH CÔNG!
+                </h2>
+                <p class="mb-0" style="color: rgba(255,255,255,0.75); font-size: 0.95rem;">
+                    Cảm ơn bạn đã tin tưởng lựa chọn mua sắm tại Fruit Store.
+                </p>
             </div>
         </div>
+
+        <!-- Body -->
+        <div class="success-body">
+
+            <!-- Order ID -->
+            <div class="text-center mb-4 pb-3" style="border-bottom: 1px solid var(--border-glass);">
+                <span class="order-id-label">MÃ ĐƠN HÀNG CỦA BẠN</span>
+                <div class="order-id-badge">
+                    #FS-<?php echo str_pad($order['order_id'], 6, '0', STR_PAD_LEFT); ?>
+                </div>
+            </div>
+
+            <!-- Invoice info -->
+            <div class="info-section-title">
+                <i class="fas fa-file-invoice" style="color: var(--primary);"></i>
+                Thông tin hóa đơn đặt hàng
+            </div>
+
+            <table class="info-table mb-4">
+                <tbody>
+                    <tr>
+                        <th>Khách hàng:</th>
+                        <td><?php echo htmlspecialchars($order['customer_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Số điện thoại:</th>
+                        <td><?php echo htmlspecialchars($order['phone'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Địa chỉ nhận hàng:</th>
+                        <td><?php echo htmlspecialchars($order['address'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Thanh toán qua:</th>
+                        <td>
+                            <?php if ($order['payment_method'] === 'cod'): ?>
+                                <span class="pay-badge-cod">
+                                    <i class="fas fa-money-bill-wave"></i> COD (Khi nhận hàng)
+                                </span>
+                            <?php else: ?>
+                                <span class="pay-badge-bank">
+                                    <i class="fas fa-university"></i> Chuyển khoản ngân hàng
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <th style="color: var(--text-secondary);">Tổng giá trị đơn hàng:</th>
+                        <td><?php echo number_format($order['total_price'], 0, ',', '.'); ?> đ</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Bank transfer info -->
+            <?php if ($order['payment_method'] === 'bank_transfer'): ?>
+                <div class="bank-card">
+                    <div class="bank-card-title">
+                        <i class="fas fa-university"></i>
+                        Thông tin chuyển khoản ngân hàng
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <ul class="bank-info-list">
+                                <li>Ngân hàng: <span>MB BANK (Ngân hàng Quân Đội)</span></li>
+                                <li>Số tài khoản: <span class="highlight">0988 888 888 888</span></li>
+                                <li>Chủ tài khoản: <span>CONG TY FRUIT STORE VIET NAM</span></li>
+                                <li>Số tiền: <span class="highlight"><?php echo number_format($order['total_price'], 0, ',', '.'); ?> đ</span></li>
+                                <li>Nội dung CK: <span style="color: var(--info);">FS <?php echo $order['order_id']; ?></span></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-center mt-3 mt-md-0">
+                            <div class="qr-box">
+                                <i class="fas fa-qrcode fa-4x"></i>
+                                <small>QUÉT MÃ QR MB BANK</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Note -->
+            <div class="note-box">
+                <i class="fas fa-check-circle mr-2" style="color: var(--primary);"></i>
+                Nhân viên chăm sóc khách hàng của Fruit Store sẽ liên hệ qua điện thoại để xác nhận lại đơn hàng trong vòng 10 phút.
+            </div>
+
+            <!-- CTA -->
+            <div class="text-center pt-2">
+                <a href="<?= BASE_URL ?>Product/"
+                   class="btn btn-success btn-lg font-weight-bold px-5 py-3 rounded-pill shadow"
+                   style="font-size: 1rem; letter-spacing: 0.02em;">
+                    <i class="fas fa-shopping-basket mr-2"></i>Quay lại trang sản phẩm
+                </a>
+            </div>
+
+        </div><!-- .success-body -->
     </div>
 </div>
 
-<style>
-    /* CSS checkmark animation */
-    .checkmark-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    .checkmark-circle {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    
-    .checkmark-circle i {
-        color: #28a745;
-        font-size: 38px;
-        animation: checkmarkGrow 0.3s ease-in-out 0.4s both;
-    }
-
-    .hover-up:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3) !important;
-    }
-
-    @keyframes scaleIn {
-        0% {
-            transform: scale(0);
-        }
-        100% {
-            transform: scale(1);
-        }
-    }
-    
-    @keyframes checkmarkGrow {
-        0% {
-            transform: scale(0.5);
-            opacity: 0;
-        }
-        100% {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-    @media (min-width: 768px) {
-        .border-md-left {
-            border-left: 1px solid #dee2e6 !important;
-        }
-    }
-</style>
-
-<?php 
-// Làm sạch mốc đơn hàng sau khi hoàn tất hiển thị để tránh tải lại trang vô tình
-unset($_SESSION['order_success']); 
+<?php
+// Xóa session đơn hàng sau khi hiển thị xong
+unset($_SESSION['order_success']);
 ?>
 <?php include dirname(dirname(__DIR__)) . '/shares/footer.php'; ?>

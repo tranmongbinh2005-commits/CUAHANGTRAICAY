@@ -1,23 +1,231 @@
 <?php include dirname(dirname(__DIR__)) . '/shares/header.php'; ?>
 
-<div class="container py-4">
+<style>
+/* ── Cart-specific overrides ── */
+.cart-hero {
+    background: linear-gradient(135deg, #0d2816 0%, #1c522b 60%, #0d2816 100%);
+    border: 1px solid rgba(0,208,132,0.12);
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.cart-hero::before {
+    content: '';
+    position: absolute;
+    width: 320px; height: 320px;
+    background: rgba(0,208,132,0.04);
+    border-radius: 50%;
+    top: -120px; right: -60px;
+    pointer-events: none;
+}
+.cart-hero::after {
+    content: '';
+    position: absolute;
+    width: 180px; height: 180px;
+    background: rgba(251,191,36,0.03);
+    border-radius: 50%;
+    bottom: -60px; left: 5%;
+    pointer-events: none;
+}
+
+.cart-table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+.cart-table-card .card-header-custom {
+    background: rgba(0,208,132,0.06);
+    border-bottom: 1px solid var(--border-glass);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 10px;
+}
+.cart-table-card .card-header-custom h5 {
+    margin: 0; font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.cart-table { width: 100%; border-collapse: collapse; }
+.cart-table thead tr {
+    background: rgba(0,208,132,0.07);
+    border-bottom: 1px solid var(--border-glass);
+}
+.cart-table thead th {
+    padding: 0.85rem 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--primary);
+}
+.cart-table tbody tr {
+    border-bottom: 1px solid var(--border-card);
+    transition: background 0.2s;
+}
+.cart-table tbody tr:last-child { border-bottom: none; }
+.cart-table tbody tr:hover { background: rgba(0,208,132,0.03); }
+.cart-table td { padding: 1rem; vertical-align: middle; color: var(--text-primary); }
+
+.product-thumb {
+    width: 64px; height: 64px; border-radius: 10px;
+    overflow: hidden; flex-shrink: 0;
+    border: 1px solid var(--border-card);
+    background: var(--bg-surface);
+}
+.product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.qty-control {
+    display: inline-flex; align-items: center; gap: 0;
+    border: 1px solid var(--border-glass);
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.2);
+}
+.qty-btn {
+    background: rgba(0,208,132,0.1);
+    border: none;
+    color: var(--primary);
+    width: 32px; height: 32px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.qty-btn:hover { background: rgba(0,208,132,0.25); }
+.qty-input {
+    width: 44px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    outline: none;
+    -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.delete-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.2);
+    color: var(--danger);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 0.75rem;
+    text-decoration: none;
+}
+.delete-btn:hover {
+    background: rgba(248,113,113,0.22);
+    border-color: var(--danger);
+    color: var(--danger);
+    transform: scale(1.12);
+}
+
+.cart-footer-actions {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-card);
+    background: rgba(0,0,0,0.15);
+}
+
+/* Summary card */
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    position: sticky; top: 20px;
+}
+.summary-card-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border-card);
+    background: rgba(0,208,132,0.06);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    display: flex; align-items: center; gap: 8px;
+}
+.summary-body { padding: 1.4rem 1.5rem; }
+.summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.85rem; font-size: 0.9rem;
+}
+.summary-row span:first-child { color: var(--text-muted); }
+.summary-row span:last-child { font-weight: 600; color: var(--text-primary); }
+.summary-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 1rem; border-top: 1px solid var(--border-glass);
+    margin-bottom: 1.4rem;
+}
+.total-label { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+.total-amount {
+    font-size: 1.65rem; font-weight: 800;
+    color: var(--accent);
+    font-family: var(--font-heading);
+}
+.total-currency { font-size: 0.9rem; font-weight: 600; margin-left: 2px; }
+
+/* Empty cart */
+.empty-cart-box {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+.empty-cart-icon {
+    font-size: 5rem;
+    color: var(--text-muted);
+    opacity: 0.3;
+    margin-bottom: 1.5rem;
+}
+
+/* Toast notification */
+#cart-toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    z-index: 9999;
+    background: var(--bg-card);
+    border: 1px solid var(--primary);
+    border-radius: 14px;
+    padding: 0.9rem 1.5rem;
+    box-shadow: 0 8px 30px rgba(0,208,132,0.2);
+    display: flex; align-items: center; gap: 10px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+    min-width: 260px;
+}
+#cart-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+#cart-toast .toast-icon { color: var(--primary); font-size: 1.2rem; }
+#cart-toast .toast-text { color: var(--text-primary); font-weight: 600; font-size: 0.9rem; }
+</style>
+
+<div class="container py-4 fade-in-up">
 
     <!-- Hero Banner -->
-    <div class="jumbotron jumbotron-fluid text-white rounded-lg shadow-lg mb-5 overflow-hidden position-relative" style="background: linear-gradient(135deg, #0d2816 0%, #1c522b 100%);">
-        <div style="position: absolute; width: 300px; height: 300px; background: rgba(255,255,255,0.03); border-radius: 50%; top: -100px; right: -50px; pointer-events: none;"></div>
-        <div style="position: absolute; width: 150px; height: 150px; background: rgba(255,255,255,0.04); border-radius: 50%; bottom: -50px; left: 5%; pointer-events: none;"></div>
-        
-        <div class="container px-4 py-2 position-relative" style="z-index: 2;">
-            <div class="row align-items-center">
-                <div class="col-md-9">
-                    <h1 class="display-4 font-weight-bold text-warning mb-2" style="letter-spacing: -1px;">
+    <div class="cart-hero">
+        <div style="position: relative; z-index: 2;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                <div>
+                    <h1 class="font-weight-bold text-warning mb-1" style="font-family: var(--font-heading); font-size: clamp(1.6rem,4vw,2.4rem); letter-spacing: -0.5px;">
                         <i class="fas fa-shopping-cart mr-2"></i>GIỎ HÀNG CỦA BẠN
                     </h1>
-                    <p class="lead text-light mb-0" style="opacity: 0.9;">Xem lại danh sách trái cây bạn đã chọn trước khi tiến hành thanh toán.</p>
+                    <p class="mb-0" style="color: var(--text-secondary); opacity: 0.85; max-width: 500px;">
+                        Xem lại danh sách trái cây bạn đã chọn trước khi tiến hành thanh toán.
+                    </p>
                 </div>
-                <div class="col-md-3 text-right d-none d-md-block">
-                    <i class="fas fa-shopping-basket text-warning" style="font-size: 80px; opacity: 0.25; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));"></i>
-                </div>
+                <i class="fas fa-shopping-basket text-warning d-none d-md-block" style="font-size: 70px; opacity: 0.18;"></i>
             </div>
         </div>
     </div>
@@ -25,79 +233,91 @@
     <?php if (!empty($cart)): ?>
         <form action="<?= BASE_URL ?>Product/updateCart" method="POST" id="cartForm">
             <div class="row">
-                <!-- Cart Items List -->
+                <!-- Cart Items -->
                 <div class="col-lg-8 mb-4">
-                    <div class="card border-0 shadow-sm rounded-lg overflow-hidden bg-white">
-                        <div class="card-header bg-white py-3 border-bottom-0">
-                            <h5 class="text-dark font-weight-bold mb-0 d-flex align-items-center">
-                                <i class="fas fa-list text-success mr-2"></i>Chi tiết sản phẩm
-                            </h5>
+                    <div class="cart-table-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-list" style="color: var(--primary);"></i>
+                            <h5>Chi tiết sản phẩm</h5>
                         </div>
+
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="thead-light">
+                            <table class="cart-table">
+                                <thead>
                                     <tr>
-                                        <th scope="col" class="border-0 pl-4">Sản phẩm</th>
-                                        <th scope="col" class="border-0 text-center">Đơn giá</th>
-                                        <th scope="col" class="border-0 text-center" style="width: 150px;">Số lượng</th>
-                                        <th scope="col" class="border-0 text-right pr-4">Thành tiền</th>
-                                        <th scope="col" class="border-0 text-center" style="width: 80px;">Xóa</th>
+                                        <th class="pl-4">Sản phẩm</th>
+                                        <th class="text-center">Đơn giá</th>
+                                        <th class="text-center" style="width: 140px;">Số lượng</th>
+                                        <th class="text-right">Thành tiền</th>
+                                        <th class="text-center" style="width: 70px;">Xóa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php 
+                                    <?php
                                     $totalPrice = 0;
-                                    foreach ($cart as $id => $item): 
+                                    foreach ($cart as $id => $item):
                                         $subtotal = $item['price'] * $item['quantity'];
                                         $totalPrice += $subtotal;
                                     ?>
-                                        <tr style="transition: all 0.2s;">
-                                            <!-- Product Info -->
-                                            <td class="pl-4 align-middle">
-                                                <div class="d-flex align-items-center py-2">
-                                                    <div class="rounded overflow-hidden bg-light border mr-3" style="width: 65px; height: 65px; flex-shrink: 0;">
+                                        <tr>
+                                            <!-- Product -->
+                                            <td class="pl-4">
+                                                <div class="d-flex align-items-center" style="gap: 12px;">
+                                                    <div class="product-thumb">
                                                         <?php if (!empty($item['image'])): ?>
-                                                            <img src="<?= BASE_URL ?><?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>" class="w-100 h-100" style="object-fit: cover;">
+                                                            <img src="<?= BASE_URL ?><?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>">
                                                         <?php else: ?>
-                                                            <div class="d-flex align-items-center justify-content-center h-100 text-muted bg-light">
-                                                                <i class="fas fa-image" style="opacity: 0.4;"></i>
+                                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                                <i class="fas fa-image" style="color: var(--text-muted); opacity: 0.4;"></i>
                                                             </div>
                                                         <?php endif; ?>
                                                     </div>
                                                     <div>
-                                                        <h6 class="font-weight-bold text-dark mb-1"><?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?></h6>
-                                                        <span class="badge badge-pill badge-light text-muted border py-1 px-2" style="font-size: 10px;">ID: <?php echo $id; ?></span>
+                                                        <div class="font-weight-bold" style="color: var(--text-primary); font-size: 0.93rem; margin-bottom: 4px;">
+                                                            <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        </div>
+                                                        <span style="font-size: 11px; color: var(--text-muted); background: rgba(0,208,132,0.07); border: 1px solid var(--border-card); border-radius: 6px; padding: 1px 7px;">
+                                                            ID: <?php echo $id; ?>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </td>
+
                                             <!-- Price -->
-                                            <td class="text-center align-middle font-weight-bold text-dark">
-                                                <?php echo number_format($item['price'], 0, ',', '.'); ?> <span class="small font-weight-bold text-muted">đ</span>
+                                            <td class="text-center font-weight-bold" style="color: var(--text-secondary);">
+                                                <?php echo number_format($item['price'], 0, ',', '.'); ?>&nbsp;<span style="font-size: 0.8rem; color: var(--text-muted);">đ</span>
                                             </td>
-                                            <!-- Quantity Controls -->
-                                            <td class="text-center align-middle">
-                                                <div class="input-group input-group-sm justify-content-center mx-auto" style="max-width: 120px;">
-                                                    <div class="input-group-prepend">
-                                                        <button class="btn btn-outline-secondary btn-minus rounded-left" type="button" onclick="changeQuantity(<?php echo $id; ?>, -1)">
-                                                            <i class="fas fa-minus"></i>
-                                                        </button>
-                                                    </div>
-                                                    <input type="number" name="quantities[<?php echo $id; ?>]" id="qty-<?php echo $id; ?>" class="form-control text-center font-weight-bold border-secondary bg-white" value="<?php echo $item['quantity']; ?>" min="1" max="100" readonly style="max-width: 50px; box-shadow: none !important;">
-                                                    <div class="input-group-append">
-                                                        <button class="btn btn-outline-secondary btn-plus rounded-right" type="button" onclick="changeQuantity(<?php echo $id; ?>, 1)">
-                                                            <i class="fas fa-plus"></i>
-                                                        </button>
-                                                    </div>
+
+                                            <!-- Quantity -->
+                                            <td class="text-center">
+                                                <div class="qty-control mx-auto">
+                                                    <button class="qty-btn" type="button" onclick="changeQuantity(<?php echo $id; ?>, -1)">
+                                                        <i class="fas fa-minus" style="font-size: 10px;"></i>
+                                                    </button>
+                                                    <input type="number"
+                                                           name="quantities[<?php echo $id; ?>]"
+                                                           id="qty-<?php echo $id; ?>"
+                                                           class="qty-input"
+                                                           value="<?php echo $item['quantity']; ?>"
+                                                           min="1" max="100" readonly>
+                                                    <button class="qty-btn" type="button" onclick="changeQuantity(<?php echo $id; ?>, 1)">
+                                                        <i class="fas fa-plus" style="font-size: 10px;"></i>
+                                                    </button>
                                                 </div>
                                             </td>
+
                                             <!-- Subtotal -->
-                                            <td class="text-right align-middle font-weight-bold text-success pr-4" style="font-size: 1.05rem;">
-                                                <?php echo number_format($subtotal, 0, ',', '.'); ?> <span class="small font-weight-bold">đ</span>
+                                            <td class="text-right font-weight-bold" style="color: var(--primary); font-size: 1rem;">
+                                                <?php echo number_format($subtotal, 0, ',', '.'); ?>&nbsp;<span style="font-size: 0.8rem;">đ</span>
                                             </td>
-                                            <!-- Action Delete -->
-                                            <td class="text-center align-middle">
-                                                <a href="<?= BASE_URL ?>Product/removeFromCart/<?php echo $id; ?>" class="btn btn-sm btn-outline-danger rounded-circle d-inline-flex align-items-center justify-content-center hover-scale" style="width: 32px; height: 32px; transition: all 0.25s;" title="Xóa khỏi giỏ" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?');">
-                                                    <i class="fas fa-trash-alt" style="font-size: 12px;"></i>
+
+                                            <!-- Delete -->
+                                            <td class="text-center">
+                                                <a href="<?= BASE_URL ?>Product/removeFromCart/<?php echo $id; ?>"
+                                                   class="delete-btn"
+                                                   title="Xóa khỏi giỏ"
+                                                   onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </a>
                                             </td>
                                         </tr>
@@ -105,99 +325,98 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-3 px-4">
-                            <a href="<?= BASE_URL ?>Product/" class="btn btn-outline-success font-weight-bold rounded-pill px-4" style="transition: all 0.25s;">
+
+                        <div class="cart-footer-actions">
+                            <a href="<?= BASE_URL ?>Product/" class="btn btn-outline-success rounded-pill px-4 font-weight-bold" style="font-size: 0.88rem;">
                                 <i class="fas fa-arrow-left mr-2"></i>Tiếp tục mua hàng
                             </a>
-                            <button type="submit" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 shadow-sm hover-scale" style="transition: all 0.25s;">
+                            <button type="submit" class="btn btn-warning rounded-pill px-4 font-weight-bold shadow-sm" style="font-size: 0.88rem;">
                                 <i class="fas fa-sync-alt mr-2"></i>Cập nhật giỏ hàng
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Summary Card -->
+                <!-- Order Summary -->
                 <div class="col-lg-4">
-                    <div class="card border-0 shadow-sm rounded-lg overflow-hidden bg-white position-sticky" style="top: 20px;">
-                        <div class="card-body p-4">
-                            <h5 class="text-dark font-weight-bold mb-4 pb-2 border-bottom">
-                                <i class="fas fa-receipt text-success mr-2"></i>Tóm tắt đơn hàng
-                            </h5>
-                            
-                            <div class="d-flex justify-content-between mb-3 text-muted">
+                    <div class="summary-card">
+                        <div class="summary-card-header">
+                            <i class="fas fa-receipt" style="color: var(--primary);"></i>
+                            <h5 class="mb-0 font-weight-bold" style="font-size: 1rem; color: var(--text-primary);">Tóm tắt đơn hàng</h5>
+                        </div>
+                        <div class="summary-body">
+                            <div class="summary-row">
                                 <span>Tạm tính (<?php echo count($cart); ?> loại):</span>
-                                <span class="font-weight-bold text-dark"><?php echo number_format($totalPrice, 0, ',', '.'); ?> đ</span>
+                                <span><?php echo number_format($totalPrice, 0, ',', '.'); ?> đ</span>
                             </div>
-                            
-                            <div class="d-flex justify-content-between mb-3 text-muted">
+                            <div class="summary-row">
                                 <span>Phí vận chuyển:</span>
-                                <span class="text-success font-weight-bold">Miễn phí <i class="fas fa-shipping-fast ml-1"></i></span>
+                                <span style="color: var(--primary);">Miễn phí <i class="fas fa-shipping-fast ml-1"></i></span>
                             </div>
-                            
-                            <hr class="my-4">
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <span class="font-weight-bold text-dark">Tổng thanh toán:</span>
-                                <h4 class="text-danger font-weight-bold mb-0">
-                                    <?php echo number_format($totalPrice, 0, ',', '.'); ?> <span class="small font-weight-bold" style="font-size: 14px;">đ</span>
-                                </h4>
+
+                            <div class="summary-total">
+                                <span class="total-label">Tổng thanh toán:</span>
+                                <div>
+                                    <span class="total-amount"><?php echo number_format($totalPrice, 0, ',', '.'); ?></span>
+                                    <span class="total-currency" style="color: var(--text-muted);">đ</span>
+                                </div>
                             </div>
-                            
-                            <a href="<?= BASE_URL ?>Product/checkout" class="btn btn-success btn-block btn-lg font-weight-bold py-3 rounded-pill shadow hover-up" style="transition: all 0.3s ease;">
+
+                            <a href="<?= BASE_URL ?>Product/checkout"
+                               class="btn btn-success btn-block font-weight-bold py-3 rounded-pill shadow"
+                               style="font-size: 1rem; letter-spacing: 0.03em; transition: all 0.3s;">
                                 <i class="fas fa-credit-card mr-2"></i>Tiến hành thanh toán
                             </a>
-                            
-                            <div class="text-center mt-3">
-                                <span class="text-muted small"><i class="fas fa-shield-alt text-success mr-1"></i>Cam kết trái cây sạch 100% an toàn</span>
+
+                            <div class="text-center mt-3" style="font-size: 0.8rem; color: var(--text-muted);">
+                                <i class="fas fa-shield-alt mr-1" style="color: var(--primary);"></i>
+                                Cam kết trái cây sạch 100% an toàn
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </form>
+
     <?php else: ?>
-        <!-- Empty Cart State -->
-        <div class="my-5 text-center py-5 bg-white rounded-lg shadow-sm border p-4">
-            <div class="mb-4">
-                <i class="fas fa-shopping-cart fa-5x text-muted mb-3" style="opacity: 0.35; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));"></i>
+        <!-- Empty Cart -->
+        <div class="empty-cart-box fade-in-up">
+            <div class="empty-cart-icon">
+                <i class="fas fa-shopping-cart"></i>
             </div>
-            <h4 class="text-dark font-weight-bold">Giỏ hàng của bạn đang trống!</h4>
-            <p class="text-muted max-w-sm mx-auto mb-4" style="max-width: 450px;">Hãy lấp đầy giỏ hàng của bạn bằng những loại trái cây tươi ngon, giàu dinh dưỡng tại Fruit Store.</p>
-            <a href="<?= BASE_URL ?>Product/" class="btn btn-success btn-lg px-5 font-weight-bold rounded-pill shadow-sm hover-scale" style="transition: all 0.25s;">
+            <h4 class="font-weight-bold mb-2" style="color: var(--text-primary);">Giỏ hàng của bạn đang trống!</h4>
+            <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto 1.5rem;">
+                Hãy lấp đầy giỏ hàng bằng những loại trái cây tươi ngon, giàu dinh dưỡng tại Fruit Store.
+            </p>
+            <a href="<?= BASE_URL ?>Product/" class="btn btn-success px-5 font-weight-bold rounded-pill shadow-sm" style="font-size: 1rem;">
                 <i class="fas fa-shopping-basket mr-2"></i>Mua sắm ngay
             </a>
         </div>
     <?php endif; ?>
+
 </div>
 
-<style>
-    .hover-scale:hover {
-        transform: scale(1.04);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    }
-    .hover-up:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3) !important;
-    }
-    .align-middle {
-        vertical-align: middle !important;
-    }
-</style>
+<!-- Toast notification -->
+<div id="cart-toast">
+    <span class="toast-icon"><i class="fas fa-check-circle"></i></span>
+    <span class="toast-text" id="toast-msg">Đã cập nhật số lượng</span>
+</div>
 
 <script>
+function showToast(msg) {
+    const toast = document.getElementById('cart-toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
 function changeQuantity(id, amount) {
     const input = document.getElementById('qty-' + id);
     if (!input) return;
-    
-    let currentVal = parseInt(input.value);
-    let newVal = currentVal + amount;
-    
-    if (newVal >= 1 && newVal <= 100) {
-        input.value = newVal;
-        // Bôi màu thay đổi nhẹ để kích thích người dùng bấm cập nhật
-        document.getElementById('qty-' + id).classList.add('border-warning');
-        
-        // Tự động gửi submit form luôn để cập nhật giỏ hàng
+    let val = parseInt(input.value) + amount;
+    if (val >= 1 && val <= 100) {
+        input.value = val;
+        // Auto-submit to update cart
         document.getElementById('cartForm').submit();
     }
 }

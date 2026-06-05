@@ -1,0 +1,356 @@
+================================================================
+   CỬA HÀNG TRÁI CÂY – TÓM TẮT CÁC LUỒNG HỆ THỐNG
+   Dự án: CUAHANGTRAICAY | Kiến trúc: PHP MVC (thuần)
+   URL gốc: http://localhost/CUAHANGTRAICAY/
+================================================================
+
+
+────────────────────────────────────────────────────────────────
+ I. CẤU TRÚC THƯ MỤC
+────────────────────────────────────────────────────────────────
+
+CUAHANGTRAICAY/
+├── index.php                    ← Điểm vào duy nhất (Front Controller)
+├── .htaccess                    ← Điều hướng tất cả request về index.php
+├── app/
+│   ├── config/
+│   │   └── database.php         ← Kết nối CSDL (PDO, MySQL)
+│   ├── controllers/
+│   │   ├── ProductController.php
+│   │   ├── AccountController.php
+│   │   └── categoryController.php
+│   ├── models/
+│   │   ├── ProductModel.php
+│   │   ├── AccountModel.php
+│   │   └── CategoryModel.php
+│   ├── views/
+│   │   ├── home.php             ← Trang chủ
+│   │   ├── product/
+│   │   │   ├── list.php         ← Danh sách kho sản phẩm
+│   │   │   ├── show.php         ← Chi tiết sản phẩm
+│   │   │   ├── add.php          ← Form thêm sản phẩm
+│   │   │   ├── edit.php         ← Form sửa sản phẩm
+│   │   │   ├── cart.php         ← Giỏ hàng
+│   │   │   ├── checkout.php     ← Trang thanh toán
+│   │   │   └── success.php      ← Đặt hàng thành công
+│   │   ├── account/
+│   │   │   ├── login.php        ← Form đăng nhập
+│   │   │   └── register.php     ← Form đăng ký
+│   │   └── category/            ← Quản lý danh mục
+│   ├── shares/
+│   │   ├── header.php           ← Navbar + CSS toàn cục
+│   │   └── footer.php           ← Footer + JS Bootstrap
+│   └── helpers/
+│       └── SessionHelper.php    ← Hỗ trợ kiểm tra session
+└── uploads/                     ← Thư mục lưu ảnh sản phẩm
+
+
+────────────────────────────────────────────────────────────────
+ II. LUỒNG ĐỊNH TUYẾN (ROUTING)
+────────────────────────────────────────────────────────────────
+
+Mọi request đều đi qua: index.php
+  → Phân tích URL: /{Controller}/{Action}/{id}
+  → Ví dụ: /CUAHANGTRAICAY/Product/show/3
+           Controller = Product
+           Action     = show
+           id         = 3
+
+Cơ chế:
+  1. index.php đọc $_GET['url']
+  2. Tách chuỗi thành [controller, action, params]
+  3. Khởi tạo class Controller tương ứng
+  4. Gọi phương thức action với tham số
+  5. Controller load View tương ứng
+
+
+────────────────────────────────────────────────────────────────
+ III. LUỒNG NGƯỜI DÙNG (USER FLOW)
+────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 1: XEM SẢN PHẨM (Khách / Đã đăng nhập)         │
+└─────────────────────────────────────────────────────────┘
+
+  Trang chủ (/)
+    └─→ home.php: Hiển thị danh sách sản phẩm nổi bật
+          └─→ Nhấn "Xem chi tiết"
+                └─→ /Product/show/{id}
+                      └─→ show.php: Ảnh, tên, giá, mô tả, danh mục, SKU
+                            └─→ Nhấn "Thêm vào giỏ hàng"
+                                  └─→ /Product/addToCart/{id}
+                                        └─→ Lưu vào $_SESSION['cart']
+                                              └─→ Chuyển về trang list
+
+  Trang kho sản phẩm (/Product/)
+    └─→ list.php: Lưới card sản phẩm
+          - Tìm kiếm theo từ khóa (client-side JS)
+          - Lọc theo danh mục (client-side JS)
+          - Xem chi tiết / Thêm vào giỏ / Sửa / Xóa (nếu admin)
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 2: GIỎ HÀNG & THANH TOÁN                        │
+└─────────────────────────────────────────────────────────┘
+
+  Nhấn "Thêm vào giỏ"
+    └─→ /Product/addToCart/{id}
+          └─→ Thêm sản phẩm vào $_SESSION['cart']
+                └─→ /Product/cart
+                      └─→ cart.php: Danh sách sp trong giỏ, số lượng, tổng tiền
+                            - Tăng/giảm số lượng
+                            - Xóa sản phẩm khỏi giỏ
+                            - Nhấn "Đặt hàng"
+                                  └─→ /Product/checkout
+                                        └─→ checkout.php: Điền địa chỉ giao hàng
+                                              └─→ Xác nhận đặt hàng
+                                                    └─→ success.php: Thông báo thành công
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 3: ĐĂNG KÝ TÀI KHOẢN                            │
+└─────────────────────────────────────────────────────────┘
+
+  Nhấn "Đăng ký" trên Navbar
+    └─→ /account/register → AccountController::register()
+          └─→ register.php: Form đăng ký gồm:
+                ┌ THÔNG TIN TÀI KHOẢN:
+                │   - Tên tài khoản (username)  [BẮT BUỘC]
+                │   - Họ và tên (fullname)       [BẮT BUỘC]
+                │   - Mật khẩu (password)        [BẮT BUỘC, >= 6 ký tự]
+                │   - Xác nhận mật khẩu          [BẮT BUỘC, phải khớp]
+                └ THÔNG TIN LIÊN HỆ:
+                    - Địa chỉ Email              [Tùy chọn, kiểm tra định dạng]
+                    - Số điện thoại              [Tùy chọn]
+                    - Địa chỉ nhận hàng          [Tùy chọn]
+
+  Submit form → POST /account/save → AccountController::save()
+    → Validate dữ liệu:
+        - Kiểm tra trường bắt buộc
+        - Kiểm tra mật khẩu khớp
+        - Kiểm tra email hợp lệ
+        - Kiểm tra username chưa tồn tại trong DB
+    → Nếu có lỗi: Quay lại form, hiển thị lỗi
+    → Nếu hợp lệ:
+        → AccountModel::save() → INSERT vào bảng `account`
+              (password được mã hóa bằng password_hash BCRYPT)
+        → Chuyển hướng sang /account/login
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 4: ĐĂNG NHẬP                                    │
+└─────────────────────────────────────────────────────────┘
+
+  Nhấn "Đăng nhập" trên Navbar
+    └─→ /account/login → AccountController::login()
+          └─→ login.php: Nhập username + password
+
+  Submit → POST /account/checklogin → AccountController::checklogin()
+    → AccountModel::getAccountByUsername($username)
+        → Tìm trong bảng `account` theo username
+    → password_verify($password, $account->password)
+    → Nếu sai: Hiển thị lỗi, quay lại form
+    → Nếu đúng:
+        → Lưu vào Session:
+              $_SESSION['username'] = username
+              $_SESSION['role']     = role (admin / user)
+              $_SESSION['user_id']  = id
+        → Chuyển hướng sang /Product (Kho sản phẩm)
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 5: ĐĂNG XUẤT                                    │
+└─────────────────────────────────────────────────────────┘
+
+  Nhấn "Đăng xuất" trên Navbar
+    └─→ /account/logout → AccountController::logout()
+          → Xóa $_SESSION['username'], ['role']
+          → Chuyển hướng về /Product
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 6: QUẢN LÝ SẢN PHẨM (Chỉ Admin)                │
+└─────────────────────────────────────────────────────────┘
+
+  ✦ THÊM SẢN PHẨM:
+      Navbar "Thêm mới" / Nút trong list.php
+        └─→ /Product/add → ProductController::add()
+              → Kiểm tra SessionHelper::isAdmin() → Không phải Admin: từ chối
+              → add.php: Form nhập:
+                    - Tên trái cây
+                    - Danh mục (dropdown từ DB)
+                    - Giá bán (VND)
+                    - Hình ảnh (upload file)
+                    - Mô tả
+              Submit → POST /Product/save → ProductController::save()
+                → Validate dữ liệu
+                → Upload ảnh vào /uploads/
+                → ProductModel::save() → INSERT vào bảng `product`
+                → Chuyển hướng về /Product/
+
+  ✦ SỬA SẢN PHẨM:
+      Nút "Sửa" trên card trong list.php
+        └─→ /Product/edit/{id} → ProductController::edit($id)
+              → Kiểm tra quyền Admin
+              → Lấy thông tin sản phẩm hiện tại từ DB
+              → edit.php: Form điền sẵn thông tin cũ
+              Submit → POST /Product/update → ProductController::update()
+                → Validate
+                → Upload ảnh mới (nếu có), xóa ảnh cũ
+                → ProductModel::update() → UPDATE bảng `product`
+                → Chuyển hướng về /Product/
+
+  ✦ XÓA SẢN PHẨM:
+      Nút "Xóa" trên card (có confirm popup)
+        └─→ /Product/delete/{id} → ProductController::delete($id)
+              → Kiểm tra quyền Admin
+              → Xóa file ảnh khỏi /uploads/ (nếu có)
+              → ProductModel::delete() → DELETE khỏi bảng `product`
+              → Chuyển hướng về /Product/
+
+
+┌─────────────────────────────────────────────────────────┐
+│  LUỒNG 7: QUẢN LÝ DANH MỤC (Chỉ Admin)                │
+└─────────────────────────────────────────────────────────┘
+
+  /category/ → categoryController::index()
+    → Lấy danh sách danh mục từ bảng `category`
+    → Hiển thị bảng danh mục, nút Thêm / Sửa / Xóa
+
+
+────────────────────────────────────────────────────────────────
+ IV. PHÂN QUYỀN HỆ THỐNG (SESSION & ROLE)
+────────────────────────────────────────────────────────────────
+
+  Vai trò:   admin  →  Toàn quyền (CRUD sản phẩm, danh mục)
+             user   →  Chỉ xem, thêm vào giỏ, đặt hàng
+
+  Kiểm tra quyền qua SessionHelper:
+    SessionHelper::isLoggedIn()  → Kiểm tra đã đăng nhập chưa
+    SessionHelper::isAdmin()     → Kiểm tra có phải admin không
+    SessionHelper::getRole()     → Lấy vai trò hiện tại
+
+  Áp dụng trong:
+    - Navbar: Hiển thị nút "Thêm mới" nếu là admin
+    - list.php: Hiển thị nút Sửa / Xóa nếu là admin
+    - show.php: Hiển thị nút Sửa nếu là admin
+    - Controller: Chặn truy cập hành động admin nếu không có quyền
+
+
+────────────────────────────────────────────────────────────────
+ V. CƠ SỞ DỮ LIỆU
+────────────────────────────────────────────────────────────────
+
+  Database: cuahangtraicay (MySQL)
+
+  Bảng: product
+  ┌───────────────┬──────────────────────────────────────────┐
+  │ Cột           │ Mô tả                                    │
+  ├───────────────┼──────────────────────────────────────────┤
+  │ id            │ Mã sản phẩm (PK, AUTO_INCREMENT)         │
+  │ name          │ Tên sản phẩm                             │
+  │ description   │ Mô tả chi tiết                           │
+  │ price         │ Giá bán (số nguyên, VND)                 │
+  │ image         │ Đường dẫn ảnh (vd: uploads/abc.jpg)      │
+  │ category_id   │ FK → bảng category                       │
+  └───────────────┴──────────────────────────────────────────┘
+
+  Bảng: category
+  ┌───────────────┬──────────────────────────────────────────┐
+  │ Cột           │ Mô tả                                    │
+  ├───────────────┼──────────────────────────────────────────┤
+  │ id            │ Mã danh mục (PK, AUTO_INCREMENT)         │
+  │ name          │ Tên danh mục (vd: Trái cây nhập khẩu)    │
+  └───────────────┴──────────────────────────────────────────┘
+
+  Bảng: account
+  ┌───────────────┬──────────────────────────────────────────┐
+  │ Cột           │ Mô tả                                    │
+  ├───────────────┼──────────────────────────────────────────┤
+  │ id            │ Mã user (PK, AUTO_INCREMENT)             │
+  │ username      │ Tên đăng nhập (UNIQUE)                   │
+  │ fullname      │ Họ và tên                                │
+  │ password      │ Mật khẩu (BCRYPT hash)                   │
+  │ role          │ Vai trò: 'admin' hoặc 'user'             │
+  │ email         │ Địa chỉ email                            │
+  │ phone         │ Số điện thoại                            │
+  │ address       │ Địa chỉ nhận hàng                        │
+  └───────────────┴──────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────
+ VI. GIỎ HÀNG (SESSION-BASED)
+────────────────────────────────────────────────────────────────
+
+  Giỏ hàng được lưu trong $_SESSION['cart'], không cần CSDL.
+
+  Cấu trúc:
+    $_SESSION['cart'] = [
+        product_id => [
+            'name'     => 'Táo Mỹ',
+            'price'    => 50000,
+            'quantity' => 2,
+            'image'    => 'uploads/tao.jpg'
+        ],
+        ...
+    ]
+
+  Luồng:
+    Thêm vào giỏ → Cập nhật session['cart']
+    Xem giỏ      → Tính tổng tiền từ session
+    Checkout      → Đọc session, hiển thị form giao hàng
+    Đặt hàng      → Xóa giỏ, chuyển sang success.php
+
+
+────────────────────────────────────────────────────────────────
+ VII. GIAO DIỆN (DESIGN SYSTEM)
+────────────────────────────────────────────────────────────────
+
+  Theme: Dark Glassmorphism – Emerald Premium
+  Font:  Inter + Space Grotesk (Google Fonts)
+  CSS:   Vanilla CSS (không dùng Tailwind)
+  JS:    Vanilla JS + Bootstrap 4.5
+
+  Màu chủ đạo:
+    Xanh Emerald  : #00d084  (primary)
+    Amber/Vàng    : #fbbf24  (accent / giá)
+    Đỏ nguy hiểm : #f87171  (danger / xóa)
+    Nền tối       : #060d0a  (background)
+
+  Layout các trang:
+    header.php  → Navbar sticky + toàn bộ CSS design system
+    footer.php  → Footer đẹp + Bootstrap JS
+    Mỗi view    → Kế thừa header/footer, viết nội dung riêng
+
+  Trang nổi bật:
+    list.php    → Hero banner, stats chips, filter glass panel, product cards
+    show.php    → 2 cột: ảnh zoom | thông tin + giá + actions
+    add.php     → Form với drag-drop upload ảnh + preview
+    edit.php    → Tương tự add.php, theme amber (vàng)
+    register    → 2 section: Tài khoản + Liên hệ, layout 2 cột
+    login.php   → Card đơn giản, social auth icons
+
+
+────────────────────────────────────────────────────────────────
+ VIII. URL CÁC TRANG CHÍNH
+────────────────────────────────────────────────────────────────
+
+  Trang chủ            : /CUAHANGTRAICAY/
+  Kho sản phẩm         : /CUAHANGTRAICAY/Product/
+  Chi tiết sản phẩm    : /CUAHANGTRAICAY/Product/show/{id}
+  Thêm sản phẩm        : /CUAHANGTRAICAY/Product/add
+  Sửa sản phẩm         : /CUAHANGTRAICAY/Product/edit/{id}
+  Xóa sản phẩm         : /CUAHANGTRAICAY/Product/delete/{id}
+  Giỏ hàng             : /CUAHANGTRAICAY/Product/cart
+  Thanh toán           : /CUAHANGTRAICAY/Product/checkout
+  Đặt hàng thành công  : /CUAHANGTRAICAY/Product/success
+  Đăng nhập            : /CUAHANGTRAICAY/account/login
+  Đăng ký              : /CUAHANGTRAICAY/account/register
+  Đăng xuất            : /CUAHANGTRAICAY/account/logout
+  Danh mục             : /CUAHANGTRAICAY/category/
+
+
+================================================================
+  Tạo ngày: 2026-06-05 | Phiên bản: 1.0
+  Hệ thống: PHP 8.1 + MySQL + Laragon | Pattern: MVC thuần
+================================================================

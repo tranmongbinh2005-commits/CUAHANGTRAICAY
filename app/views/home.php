@@ -69,7 +69,7 @@
 
     <!-- Feature Access Cards -->
     <div class="row mb-4">
-        <div class="col-md-6 mb-4">
+        <div class="<?php echo SessionHelper::isAdmin() ? 'col-md-6' : 'col-md-12'; ?> mb-4">
             <div class="card border-0 shadow-sm h-100 bg-white hover-shadow" style="transition: all 0.3s ease;">
                 <div class="card-body p-4 d-flex align-items-start">
                     <div class="p-3 rounded-lg mr-3" style="background-color: #e8f5e9; color: #28a745;">
@@ -84,6 +84,7 @@
             </div>
         </div>
 
+        <?php if (SessionHelper::isAdmin()): ?>
         <div class="col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100 bg-white hover-shadow" style="transition: all 0.3s ease;">
                 <div class="card-body p-4 d-flex align-items-start">
@@ -98,6 +99,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

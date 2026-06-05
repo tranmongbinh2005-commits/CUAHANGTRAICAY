@@ -3,6 +3,7 @@
 require_once('app/config/database.php');
 require_once('app/models/ProductModel.php');
 require_once('app/models/CategoryModel.php');
+require_once('app/helpers/SessionHelper.php');
 
 class ProductController 
 {
@@ -30,11 +31,19 @@ class ProductController
     }
 
     public function add() {
+        if (!SessionHelper::isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         $categories = (new CategoryModel($this->db))->getCategories();
         include_once 'app/views/product/add.php';
     }
 
     public function save() {
+        if (!SessionHelper::isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
@@ -70,6 +79,10 @@ class ProductController
     }
 
     public function edit($id) {
+        if (!SessionHelper::isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         $product = $this->productModel->getProductById($id);
         $categories = (new CategoryModel($this->db))->getCategories();
 
@@ -81,6 +94,10 @@ class ProductController
     }
 
     public function update() {
+        if (!SessionHelper::isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
             $name = $_POST['name'];
@@ -117,6 +134,10 @@ class ProductController
     }
 
     public function delete($id) {
+        if (!SessionHelper::isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         if ($this->productModel->deleteProduct($id)) {
             header('Location: ' . BASE_URL . 'Product');
         } else {
@@ -176,7 +197,13 @@ class ProductController
             ];
         }
 
-        header('Location: ' . BASE_URL . 'Product/cart');
+        // Redirect trở lại trang trước (danh mục/sản phẩm), không tự chuyển sang giỏ hàng
+        $referer = $_SERVER['HTTP_REFERER'] ?? (BASE_URL . 'Product/');
+        // Nếu referer trỏ thẳng vào trang cart thì về trang sản phẩm để tránh vòng lặp
+        if (strpos($referer, 'Product/cart') !== false || strpos($referer, 'Product/checkout') !== false) {
+            $referer = BASE_URL . 'Product/';
+        }
+        header('Location: ' . $referer);
     }
 
     // Hiển thị giỏ hàng
@@ -215,6 +242,15 @@ class ProductController
             header('Location: ' . BASE_URL . 'Product/cart');
             return;
         }
+
+        // Tự động lấy thông tin tài khoản đã đăng nhập để điền sẵn form
+        $userInfo = null;
+        if (SessionHelper::isLoggedIn()) {
+            require_once 'app/models/AccountModel.php';
+            $accountModel = new AccountModel($this->db);
+            $userInfo = $accountModel->getAccountByUsername($_SESSION['username']);
+        }
+
         include 'app/views/product/checkout.php';
     }
 
@@ -273,11 +309,21 @@ class ProductController
                     include 'app/views/product/success.php';
                     return;
                 } else {
-                    $errors['db'] = "Đã xảy ra lỗi trong quá trình lưu đơn hàng. Vui lòng thử lại.";
+                    $debugMsg = $_SESSION['order_error_debug'] ?? '';
+                    unset($_SESSION['order_error_debug']);
+                    $errors['db'] = "Đã xảy ra lỗi trong quá trình lưu đơn hàng. Vui lòng thử lại."
+                                  . ((!empty($debugMsg)) ? " (Chi tiết: " . htmlspecialchars($debugMsg) . ")" : "");
                 }
             }
 
             // Nếu có lỗi thì load lại trang checkout kèm theo mảng lỗi
+            // Phải load lại $userInfo để form vẫn hiển thị thông tin tài khoản
+            $userInfo = null;
+            if (SessionHelper::isLoggedIn()) {
+                require_once 'app/models/AccountModel.php';
+                $accountModel = new AccountModel($this->db);
+                $userInfo = $accountModel->getAccountByUsername($_SESSION['username']);
+            }
             include 'app/views/product/checkout.php';
         }
     }

@@ -2,71 +2,54 @@
 session_start();
 
 // Tự động tính toán thư mục gốc (Base Path) của ứng dụng
-$scriptName = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
-$baseDir = dirname($scriptName);
-$basePath = ($baseDir === '/' || $baseDir === '\\') ? '/' : rtrim($baseDir, '/\\') . '/';
-define('BASE_URL', $basePath);
+define('BASE_URL', '/CUAHANGTRAICAY/');
 
-require_once 'app/controllers/ProductController.php';
-require_once 'app/controllers/categoryController.php';
-require_once 'app/controllers/DefaultController.php';
+require_once 'app/helpers/SessionHelper.php';
 
 $url = isset($_GET['url']) ? trim($_GET['url'], '/') : '';
-$segments = $url === '' ? [] : explode('/', $url);
 
-if (empty($segments)) {
+if ($url === '') {
     include 'app/views/home.php';
     return;
 }
 
-$controller = strtolower($segments[0]);
-$action = isset($segments[1]) ? strtolower($segments[1]) : 'index';
-$id = $segments[2] ?? null;
+$segments = explode('/', $url);
 
-switch ($controller) {
-    case 'product':
-        $productController = new ProductController();
-        if ($action === 'add') {
-            $productController->add();
-        } elseif ($action === 'save') {
-            $productController->save();
-        } elseif ($action === 'edit' && $id !== null) {
-            $productController->edit($id);
-        } elseif ($action === 'update') {
-            $productController->update();
-        } elseif ($action === 'delete' && $id !== null) {
-            $productController->delete($id);
-        } elseif ($action === 'show' && $id !== null) {
-            $productController->show($id);
-        } elseif ($action === 'addtocart' && $id !== null) {
-            $productController->addToCart($id);
-        } elseif ($action === 'cart') {
-            $productController->cart();
-        } elseif ($action === 'updatecart') {
-            $productController->updateCart();
-        } elseif ($action === 'removefromcart' && $id !== null) {
-            $productController->removeFromCart($id);
-        } elseif ($action === 'checkout') {
-            $productController->checkout();
-        } elseif ($action === 'processcheckout') {
-            $productController->processCheckout();
-        } elseif ($action === 'list') {
-            $productController->list();
-        } else {
-            $productController->index();
-        }
-        break;
+// Kiểm tra phần đầu tiên của URL để xác định controller
+$controllerName = isset($segments[0]) && $segments[0] != '' ? ucfirst($segments[0]) . 'Controller' : 'DefaultController';
+// Kiểm tra phần thứ hai của URL để xác định action
+$action = isset($segments[1]) && $segments[1] != '' ? $segments[1] : 'index';
 
-    case 'category':
-        $categoryController = new CategoryController();
-        if ($action === 'list' || $action === 'index') {
-            $categoryController->list();
-        } else {
-            echo 'Route chưa hỗ trợ cho Category.';
-        }
-        break;
-
-    default:
-        echo '404 Not Found';
-        break;
+// Handle cases where filename does not match case exactly (like categoryController.php)
+$controllerFile = 'app/controllers/' . $controllerName . '.php';
+if (!file_exists($controllerFile)) {
+    $lowerControllerFile = 'app/controllers/' . lcfirst($controllerName) . '.php';
+    if (file_exists($lowerControllerFile)) {
+        $controllerFile = $lowerControllerFile;
+    } else {
+        die('Controller not found: ' . htmlspecialchars($controllerName));
+    }
 }
+
+require_once $controllerFile;
+$controller = new $controllerName();
+
+// Resolve action case-insensitively if needed
+if (!method_exists($controller, $action)) {
+    $methods = get_class_methods($controller);
+    $found = false;
+    foreach ($methods as $method) {
+        if (strtolower($method) === strtolower($action)) {
+            $action = $method;
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        die('Action not found: ' . htmlspecialchars($action));
+    }
+}
+
+// Gọi action với các tham số còn lại (nếu có)
+call_user_func_array([$controller, $action], array_slice($segments, 2));
+?>

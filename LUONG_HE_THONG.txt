@@ -1,7 +1,7 @@
 ================================================================
    CỬA HÀNG TRÁI CÂY – TÓM TẮT CÁC LUỒNG HỆ THỐNG
    Dự án: CUAHANGTRAICAY | Kiến trúc: PHP MVC (thuần)
-   URL gốc: http://localhost/CUAHANGTRAICAY/
+   URL gốc: http://localhost:81/CUAHANGTRAICAY/
 ================================================================
 
 
@@ -10,62 +10,68 @@
 ────────────────────────────────────────────────────────────────
 
 CUAHANGTRAICAY/
-├── index.php                    ← Điểm vào duy nhất (Front Controller)
-├── .htaccess                    ← Điều hướng tất cả request về index.php
-├── app/
-│   ├── config/
-│   │   └── database.php         ← Kết nối CSDL (PDO, MySQL)
-│   ├── controllers/
-│   │   ├── ProductController.php
-│   │   ├── AccountController.php
-│   │   └── categoryController.php
-│   ├── models/
-│   │   ├── ProductModel.php
-│   │   ├── AccountModel.php
-│   │   └── CategoryModel.php
-│   ├── views/
-│   │   ├── home.php             ← Trang chủ
-│   │   ├── product/
-│   │   │   ├── list.php         ← Danh sách kho sản phẩm
-│   │   │   ├── show.php         ← Chi tiết sản phẩm
-│   │   │   ├── add.php          ← Form thêm sản phẩm
-│   │   │   ├── edit.php         ← Form sửa sản phẩm
-│   │   │   ├── cart.php         ← Giỏ hàng
-│   │   │   ├── checkout.php     ← Trang thanh toán
-│   │   │   └── success.php      ← Đặt hàng thành công
-│   │   ├── account/
-│   │   │   ├── login.php        ← Form đăng nhập
-│   │   │   └── register.php     ← Form đăng ký
-│   │   └── category/            ← Quản lý danh mục
-│   ├── shares/
-│   │   ├── header.php           ← Navbar + CSS toàn cục
-│   │   └── footer.php           ← Footer + JS Bootstrap
-│   └── helpers/
-│       └── SessionHelper.php    ← Hỗ trợ kiểm tra session
-└── uploads/                     ← Thư mục lưu ảnh sản phẩm
+├── index.php                        ← Điểm vào duy nhất (Front Controller)
+├── .htaccess                        ← Điều hướng mọi request về index.php
+├── LUONG_HE_THONG.txt               ← Tài liệu mô tả nghiệp vụ hệ thống
+├── cuahangtraicay.sql               ← File SQL khởi tạo database
+├── uploads/                         ← Thư mục lưu ảnh sản phẩm (jpg/png/gif)
+└── app/
+    ├── config/
+    │   └── database.php             ← Kết nối CSDL (PDO + MySQL, ERRMODE_EXCEPTION)
+    ├── controllers/
+    │   ├── ProductController.php    ← Xử lý sản phẩm, giỏ hàng, đặt hàng
+    │   ├── AccountController.php    ← Đăng ký, đăng nhập, đăng xuất
+    │   └── categoryController.php   ← Quản lý danh mục (CRUD)
+    ├── models/
+    │   ├── ProductModel.php         ← CRUD bảng `product`
+    │   ├── AccountModel.php         ← CRUD bảng `account`
+    │   ├── OrderModel.php           ← Tạo đơn hàng, ghi bảng `orders` & `order_details`
+    │   └── CategoryModel.php        ← CRUD bảng `category`
+    ├── views/
+    │   ├── home.php                 ← Trang chủ (danh sách sản phẩm nổi bật)
+    │   ├── product/
+    │   │   ├── list.php             ← Kho sản phẩm (filter, search, card lưới)
+    │   │   ├── show.php             ← Chi tiết sản phẩm (2 cột: ảnh + thông tin)
+    │   │   ├── add.php              ← Form thêm sản phẩm (chỉ admin)
+    │   │   ├── edit.php             ← Form sửa sản phẩm (chỉ admin, theme amber)
+    │   │   ├── cart.php             ← Giỏ hàng (dark theme, tăng/giảm SL, xóa)
+    │   │   ├── checkout.php         ← Trang thanh toán (auto-fill từ tài khoản DB)
+    │   │   └── success.php          ← Đặt hàng thành công (hiển thị hóa đơn)
+    │   ├── account/
+    │   │   ├── login.php            ← Form đăng nhập
+    │   │   └── register.php         ← Form đăng ký (2 section: tài khoản + liên hệ)
+    │   └── category/                ← Quản lý danh mục (bảng CRUD)
+    ├── shares/
+    │   ├── header.php               ← Navbar sticky + toàn bộ CSS Design System
+    │   └── footer.php               ← Footer + Bootstrap JS
+    └── helpers/
+        └── SessionHelper.php        ← Kiểm tra session, phân quyền
 
 
 ────────────────────────────────────────────────────────────────
  II. LUỒNG ĐỊNH TUYẾN (ROUTING)
 ────────────────────────────────────────────────────────────────
 
-Mọi request đều đi qua: index.php
-  → Phân tích URL: /{Controller}/{Action}/{id}
+Mọi request đi qua: index.php
+  → Đọc $_GET['url']
+  → Tách URL: /{Controller}/{Action}/{id?}
   → Ví dụ: /CUAHANGTRAICAY/Product/show/3
-           Controller = Product
-           Action     = show
-           id         = 3
+           Controller = ProductController
+           Action     = show($id=3)
 
 Cơ chế:
   1. index.php đọc $_GET['url']
-  2. Tách chuỗi thành [controller, action, params]
-  3. Khởi tạo class Controller tương ứng
-  4. Gọi phương thức action với tham số
-  5. Controller load View tương ứng
+  2. Tách thành [controller, action, params]
+  3. Khởi tạo class {Controller}Controller
+  4. Gọi phương thức action($params)
+  5. Controller load View tương ứng qua include
+
+Hằng số BASE_URL được định nghĩa trong index.php,
+dùng cho tất cả href và Location redirect.
 
 
 ────────────────────────────────────────────────────────────────
- III. LUỒNG NGƯỜI DÙNG (USER FLOW)
+ III. LUỒNG NGƯỜI DÙNG (USER FLOWS)
 ────────────────────────────────────────────────────────────────
 
 ┌─────────────────────────────────────────────────────────┐
@@ -73,38 +79,112 @@ Cơ chế:
 └─────────────────────────────────────────────────────────┘
 
   Trang chủ (/)
-    └─→ home.php: Hiển thị danh sách sản phẩm nổi bật
+    └─→ home.php: Hiển thị sản phẩm nổi bật
           └─→ Nhấn "Xem chi tiết"
-                └─→ /Product/show/{id}
-                      └─→ show.php: Ảnh, tên, giá, mô tả, danh mục, SKU
-                            └─→ Nhấn "Thêm vào giỏ hàng"
-                                  └─→ /Product/addToCart/{id}
-                                        └─→ Lưu vào $_SESSION['cart']
-                                              └─→ Chuyển về trang list
+                └─→ GET /Product/show/{id}
+                      └─→ ProductController::show($id)
+                            → ProductModel::getProductById($id)
+                            → show.php: Ảnh, tên, giá, mô tả, danh mục
 
-  Trang kho sản phẩm (/Product/)
-    └─→ list.php: Lưới card sản phẩm
-          - Tìm kiếm theo từ khóa (client-side JS)
-          - Lọc theo danh mục (client-side JS)
-          - Xem chi tiết / Thêm vào giỏ / Sửa / Xóa (nếu admin)
+  Kho sản phẩm (/Product/)
+    └─→ ProductController::index()
+          → ProductModel::getProducts()
+          → CategoryModel::getCategories()
+          → list.php: Lưới card sản phẩm
+                - Tìm kiếm theo tên (client-side JS)
+                - Lọc theo danh mục (client-side JS)
+                - Nút "Thêm vào giỏ" / "Xem chi tiết"
+                - Nút "Sửa" / "Xóa" (chỉ hiện với admin)
 
 
 ┌─────────────────────────────────────────────────────────┐
-│  LUỒNG 2: GIỎ HÀNG & THANH TOÁN                        │
+│  LUỒNG 2: GIỎ HÀNG & THANH TOÁN (ĐẶT HÀNG)           │
 └─────────────────────────────────────────────────────────┘
 
-  Nhấn "Thêm vào giỏ"
-    └─→ /Product/addToCart/{id}
-          └─→ Thêm sản phẩm vào $_SESSION['cart']
-                └─→ /Product/cart
-                      └─→ cart.php: Danh sách sp trong giỏ, số lượng, tổng tiền
-                            - Tăng/giảm số lượng
-                            - Xóa sản phẩm khỏi giỏ
-                            - Nhấn "Đặt hàng"
-                                  └─→ /Product/checkout
-                                        └─→ checkout.php: Điền địa chỉ giao hàng
-                                              └─→ Xác nhận đặt hàng
-                                                    └─→ success.php: Thông báo thành công
+  [Bước 1] Thêm vào giỏ hàng
+    Nhấn "Thêm vào giỏ" (từ list.php hoặc show.php)
+      └─→ GET /Product/addToCart/{id}
+            └─→ ProductController::addToCart($id)
+                  → Lấy sản phẩm từ DB (getProductById)
+                  → Nếu đã có trong giỏ: quantity++
+                  → Nếu chưa có: thêm mới vào $_SESSION['cart']
+                  → Redirect về trang TRƯỚC ĐÓ (HTTP_REFERER)
+                    ※ KHÔNG tự chuyển sang trang giỏ hàng
+                    ※ Nếu referer là cart/checkout → về /Product/
+
+  [Bước 2] Xem giỏ hàng
+    Nhấn "Giỏ hàng" trên Navbar (hoặc tự vào)
+      └─→ GET /Product/cart
+            └─→ ProductController::cart()
+                  → Đọc $_SESSION['cart']
+                  → cart.php: Hiển thị danh sách sản phẩm
+                        - Ảnh, tên, đơn giá, số lượng (+/-), thành tiền
+                        - Xóa từng sản phẩm
+                        - Cập nhật số lượng → POST /Product/updateCart
+                        - Tóm tắt đơn hàng (tổng tiền, miễn phí ship)
+                        - Nút "Tiến hành thanh toán"
+
+    Cập nhật số lượng:
+      POST /Product/updateCart
+        → quantities[product_id] = số lượng mới
+        → Nếu quantity <= 0: xóa khỏi giỏ
+        → Redirect về /Product/cart
+
+    Xóa sản phẩm:
+      GET /Product/removeFromCart/{id}
+        → unset($_SESSION['cart'][$id])
+        → Redirect về /Product/cart
+
+  [Bước 3] Thanh toán (Checkout)
+    Nhấn "Tiến hành thanh toán"
+      └─→ GET /Product/checkout
+            └─→ ProductController::checkout()
+                  → Nếu giỏ trống: redirect về /Product/cart
+                  → Nếu đã đăng nhập:
+                      AccountModel::getAccountByUsername($_SESSION['username'])
+                      → Lấy $userInfo (object) từ bảng `account`
+                  → checkout.php:
+                        - Form giao hàng tự động điền từ $userInfo:
+                            customer_name ← $userInfo->fullname
+                            phone         ← $userInfo->phone
+                            email         ← $userInfo->email
+                            address       ← $userInfo->address
+                        - Ưu tiên $_POST nếu user đã nhập (khi có lỗi validation)
+                        - Chọn phương thức thanh toán: COD / Chuyển khoản
+                        - Ghi chú giao hàng (TÙY CHỌN, để trống được)
+                        - Tóm tắt giỏ hàng bên phải
+
+  [Bước 4] Xác nhận đặt hàng
+    Submit form → POST /Product/processCheckout
+      └─→ ProductController::processCheckout()
+            → Validate bắt buộc:
+                customer_name (không rỗng)
+                phone         (không rỗng)
+                address       (không rỗng)
+                notes         → TÙY CHỌN (để trống vẫn đặt được)
+            → Nếu giỏ trống: redirect về /Product/cart
+            → Nếu hợp lệ:
+                OrderModel::createOrder(..., $cart)
+                  → BEGIN TRANSACTION
+                  → INSERT vào bảng `orders`
+                  → INSERT từng sp vào bảng `order_details`
+                  → COMMIT → trả về $order_id
+                → Xóa $_SESSION['cart']
+                → Lưu $_SESSION['order_success'] = [order_id, customer_name, phone, address, total_price, payment_method]
+                → Hiển thị success.php (hóa đơn thành công)
+            → Nếu lỗi DB:
+                → Lưu thông báo lỗi vào $_SESSION['order_error_debug']
+                → Load lại $userInfo (để form tự điền lại)
+                → Hiển thị lại checkout.php kèm thông báo lỗi
+
+  [Bước 5] Trang thành công
+    success.php:
+      → Đọc $_SESSION['order_success']
+      → Hiển thị hóa đơn: mã đơn hàng (#FS-XXXXXX), tên KH, SĐT, địa chỉ,
+        phương thức thanh toán, tổng tiền
+      → Nếu chuyển khoản: hiện thông tin ngân hàng + QR
+      → unset($_SESSION['order_success']) sau khi hiển thị
+      → Nút "Quay lại trang sản phẩm"
 
 
 ┌─────────────────────────────────────────────────────────┐
@@ -112,29 +192,30 @@ Cơ chế:
 └─────────────────────────────────────────────────────────┘
 
   Nhấn "Đăng ký" trên Navbar
-    └─→ /account/register → AccountController::register()
-          └─→ register.php: Form đăng ký gồm:
+    └─→ GET /account/register → AccountController::register()
+          → register.php: Form đăng ký gồm:
                 ┌ THÔNG TIN TÀI KHOẢN:
-                │   - Tên tài khoản (username)  [BẮT BUỘC]
+                │   - Tên tài khoản (username)  [BẮT BUỘC, UNIQUE]
                 │   - Họ và tên (fullname)       [BẮT BUỘC]
                 │   - Mật khẩu (password)        [BẮT BUỘC, >= 6 ký tự]
                 │   - Xác nhận mật khẩu          [BẮT BUỘC, phải khớp]
-                └ THÔNG TIN LIÊN HỆ:
+                └ THÔNG TIN LIÊN HỆ (dùng để auto-fill checkout):
                     - Địa chỉ Email              [Tùy chọn, kiểm tra định dạng]
                     - Số điện thoại              [Tùy chọn]
                     - Địa chỉ nhận hàng          [Tùy chọn]
 
-  Submit form → POST /account/save → AccountController::save()
-    → Validate dữ liệu:
+  Submit → POST /account/save → AccountController::save()
+    → Validate:
         - Kiểm tra trường bắt buộc
-        - Kiểm tra mật khẩu khớp
-        - Kiểm tra email hợp lệ
-        - Kiểm tra username chưa tồn tại trong DB
-    → Nếu có lỗi: Quay lại form, hiển thị lỗi
+        - Kiểm tra mật khẩu >= 6 ký tự và trùng khớp
+        - Kiểm tra email hợp lệ (nếu nhập)
+        - AccountModel::getAccountByUsername() → kiểm tra username đã tồn tại
+    → Nếu lỗi: reload form, hiển thị thông báo lỗi
     → Nếu hợp lệ:
-        → AccountModel::save() → INSERT vào bảng `account`
-              (password được mã hóa bằng password_hash BCRYPT)
-        → Chuyển hướng sang /account/login
+        AccountModel::save(username, fullname, password, role='user', email, phone, address)
+          → password_hash(PASSWORD_BCRYPT)
+          → INSERT INTO `account`
+        → Redirect về /account/login
 
 
 ┌─────────────────────────────────────────────────────────┐
@@ -142,20 +223,23 @@ Cơ chế:
 └─────────────────────────────────────────────────────────┘
 
   Nhấn "Đăng nhập" trên Navbar
-    └─→ /account/login → AccountController::login()
-          └─→ login.php: Nhập username + password
+    └─→ GET /account/login → AccountController::login()
+          → login.php: Nhập username + password
 
   Submit → POST /account/checklogin → AccountController::checklogin()
     → AccountModel::getAccountByUsername($username)
-        → Tìm trong bảng `account` theo username
-    → password_verify($password, $account->password)
-    → Nếu sai: Hiển thị lỗi, quay lại form
+    → password_verify($inputPassword, $account->password)
+    → Nếu sai: hiển thị lỗi, quay lại form
     → Nếu đúng:
-        → Lưu vào Session:
-              $_SESSION['username'] = username
-              $_SESSION['role']     = role (admin / user)
-              $_SESSION['user_id']  = id
-        → Chuyển hướng sang /Product (Kho sản phẩm)
+        → Lưu Session:
+              $_SESSION['username'] = $account->username
+              $_SESSION['role']     = $account->role   (admin / user)
+        → Redirect về /Product (Kho sản phẩm)
+
+  ※ Sau khi đăng nhập, vào trang /Product/checkout:
+      → Hệ thống tự lấy fullname, phone, email, address từ DB
+      → Điền sẵn vào form checkout (dùng $userInfo->field)
+      → Nếu admin cập nhật thông tin trong DB → checkout tự cập nhật theo
 
 
 ┌─────────────────────────────────────────────────────────┐
@@ -163,9 +247,9 @@ Cơ chế:
 └─────────────────────────────────────────────────────────┘
 
   Nhấn "Đăng xuất" trên Navbar
-    └─→ /account/logout → AccountController::logout()
-          → Xóa $_SESSION['username'], ['role']
-          → Chuyển hướng về /Product
+    └─→ GET /account/logout → AccountController::logout()
+          → session_destroy() hoặc unset các session key
+          → Redirect về /Product
 
 
 ┌─────────────────────────────────────────────────────────┐
@@ -173,93 +257,94 @@ Cơ chế:
 └─────────────────────────────────────────────────────────┘
 
   ✦ THÊM SẢN PHẨM:
-      Navbar "Thêm mới" / Nút trong list.php
-        └─→ /Product/add → ProductController::add()
-              → Kiểm tra SessionHelper::isAdmin() → Không phải Admin: từ chối
+      Navbar "Thêm mới" (chỉ hiện với admin)
+        └─→ GET /Product/add → ProductController::add()
+              → SessionHelper::isAdmin() → Không phải admin: từ chối
+              → CategoryModel::getCategories()
               → add.php: Form nhập:
-                    - Tên trái cây
-                    - Danh mục (dropdown từ DB)
-                    - Giá bán (VND)
-                    - Hình ảnh (upload file)
+                    - Tên trái cây [BẮT BUỘC]
+                    - Danh mục (dropdown từ DB) [BẮT BUỘC]
+                    - Giá bán (VND) [BẮT BUỘC]
                     - Mô tả
+                    - Upload ảnh (jpg/jpeg/png/gif, tối đa 10MB)
               Submit → POST /Product/save → ProductController::save()
-                → Validate dữ liệu
-                → Upload ảnh vào /uploads/
-                → ProductModel::save() → INSERT vào bảng `product`
-                → Chuyển hướng về /Product/
+                → Validate + upload ảnh vào /uploads/
+                → ProductModel::addProduct() → INSERT vào `product`
+                → Redirect về /Product/
 
   ✦ SỬA SẢN PHẨM:
-      Nút "Sửa" trên card trong list.php
-        └─→ /Product/edit/{id} → ProductController::edit($id)
-              → Kiểm tra quyền Admin
-              → Lấy thông tin sản phẩm hiện tại từ DB
-              → edit.php: Form điền sẵn thông tin cũ
+      Nút "Sửa" trên card (chỉ admin)
+        └─→ GET /Product/edit/{id} → ProductController::edit($id)
+              → Kiểm tra quyền admin
+              → ProductModel::getProductById($id)
+              → CategoryModel::getCategories()
+              → edit.php: Form điền sẵn thông tin cũ (theme amber)
               Submit → POST /Product/update → ProductController::update()
                 → Validate
-                → Upload ảnh mới (nếu có), xóa ảnh cũ
-                → ProductModel::update() → UPDATE bảng `product`
-                → Chuyển hướng về /Product/
+                → Upload ảnh mới nếu có (giữ ảnh cũ nếu không upload)
+                → ProductModel::updateProduct() → UPDATE `product`
+                → Redirect về /Product/
 
   ✦ XÓA SẢN PHẨM:
-      Nút "Xóa" trên card (có confirm popup)
-        └─→ /Product/delete/{id} → ProductController::delete($id)
-              → Kiểm tra quyền Admin
-              → Xóa file ảnh khỏi /uploads/ (nếu có)
-              → ProductModel::delete() → DELETE khỏi bảng `product`
-              → Chuyển hướng về /Product/
+      Nút "Xóa" trên card (có confirm popup, chỉ admin)
+        └─→ GET /Product/delete/{id} → ProductController::delete($id)
+              → Kiểm tra quyền admin
+              → ProductModel::deleteProduct($id) → DELETE `product`
+              → Redirect về /Product/
 
 
 ┌─────────────────────────────────────────────────────────┐
 │  LUỒNG 7: QUẢN LÝ DANH MỤC (Chỉ Admin)                │
 └─────────────────────────────────────────────────────────┘
 
-  /category/ → categoryController::index()
-    → Lấy danh sách danh mục từ bảng `category`
-    → Hiển thị bảng danh mục, nút Thêm / Sửa / Xóa
+  GET /category/ → categoryController::index()
+    → CategoryModel::getCategories()
+    → Hiển thị bảng danh mục với nút Thêm / Sửa / Xóa
 
 
 ────────────────────────────────────────────────────────────────
  IV. PHÂN QUYỀN HỆ THỐNG (SESSION & ROLE)
 ────────────────────────────────────────────────────────────────
 
-  Vai trò:   admin  →  Toàn quyền (CRUD sản phẩm, danh mục)
-             user   →  Chỉ xem, thêm vào giỏ, đặt hàng
+  Vai trò:
+    admin  →  Toàn quyền (CRUD sản phẩm, danh mục, xem đơn hàng)
+    user   →  Xem sản phẩm, thêm giỏ hàng, đặt hàng
 
-  Kiểm tra quyền qua SessionHelper:
-    SessionHelper::isLoggedIn()  → Kiểm tra đã đăng nhập chưa
-    SessionHelper::isAdmin()     → Kiểm tra có phải admin không
-    SessionHelper::getRole()     → Lấy vai trò hiện tại
+  Kiểm tra qua SessionHelper:
+    SessionHelper::isLoggedIn()     → isset($_SESSION['username'])
+    SessionHelper::isAdmin()        → role === 'admin'
+    SessionHelper::getRole()        → $_SESSION['role'] ?? 'guest'
+    SessionHelper::hasRole($role)   → so sánh role cụ thể
 
   Áp dụng trong:
-    - Navbar: Hiển thị nút "Thêm mới" nếu là admin
-    - list.php: Hiển thị nút Sửa / Xóa nếu là admin
-    - show.php: Hiển thị nút Sửa nếu là admin
-    - Controller: Chặn truy cập hành động admin nếu không có quyền
+    - header.php  : Hiển thị "Thêm mới" nếu admin
+    - list.php    : Nút Sửa / Xóa nếu admin
+    - show.php    : Nút Sửa nếu admin
+    - checkout.php: Auto-fill nếu đã đăng nhập (isLoggedIn)
+    - Controller  : Guard đầu mỗi action admin (isAdmin → exit)
 
 
 ────────────────────────────────────────────────────────────────
- V. CƠ SỞ DỮ LIỆU
+ V. CƠ SỞ DỮ LIỆU (MySQL – cuahangtraicay)
 ────────────────────────────────────────────────────────────────
-
-  Database: cuahangtraicay (MySQL)
 
   Bảng: product
   ┌───────────────┬──────────────────────────────────────────┐
   │ Cột           │ Mô tả                                    │
   ├───────────────┼──────────────────────────────────────────┤
-  │ id            │ Mã sản phẩm (PK, AUTO_INCREMENT)         │
+  │ id            │ PK, AUTO_INCREMENT                       │
   │ name          │ Tên sản phẩm                             │
   │ description   │ Mô tả chi tiết                           │
-  │ price         │ Giá bán (số nguyên, VND)                 │
+  │ price         │ Giá bán (DECIMAL, VND)                   │
   │ image         │ Đường dẫn ảnh (vd: uploads/abc.jpg)      │
-  │ category_id   │ FK → bảng category                       │
+  │ category_id   │ FK → bảng category(id)                   │
   └───────────────┴──────────────────────────────────────────┘
 
   Bảng: category
   ┌───────────────┬──────────────────────────────────────────┐
   │ Cột           │ Mô tả                                    │
   ├───────────────┼──────────────────────────────────────────┤
-  │ id            │ Mã danh mục (PK, AUTO_INCREMENT)         │
+  │ id            │ PK, AUTO_INCREMENT                       │
   │ name          │ Tên danh mục (vd: Trái cây nhập khẩu)    │
   └───────────────┴──────────────────────────────────────────┘
 
@@ -267,22 +352,54 @@ Cơ chế:
   ┌───────────────┬──────────────────────────────────────────┐
   │ Cột           │ Mô tả                                    │
   ├───────────────┼──────────────────────────────────────────┤
-  │ id            │ Mã user (PK, AUTO_INCREMENT)             │
+  │ id            │ PK, AUTO_INCREMENT                       │
   │ username      │ Tên đăng nhập (UNIQUE)                   │
-  │ fullname      │ Họ và tên                                │
+  │ fullname      │ Họ và tên đầy đủ                         │
   │ password      │ Mật khẩu (BCRYPT hash)                   │
-  │ role          │ Vai trò: 'admin' hoặc 'user'             │
-  │ email         │ Địa chỉ email                            │
-  │ phone         │ Số điện thoại                            │
-  │ address       │ Địa chỉ nhận hàng                        │
+  │ role          │ 'admin' hoặc 'user'                      │
+  │ email         │ Địa chỉ email (tùy chọn)                 │
+  │ phone         │ Số điện thoại (tùy chọn)                 │
+  │ address       │ Địa chỉ nhận hàng (tùy chọn)             │
   └───────────────┴──────────────────────────────────────────┘
+  ※ fullname, phone, email, address được tự động điền vào form
+    checkout khi người dùng đã đăng nhập. Cập nhật DB → checkout
+    phản ánh ngay lập tức (query mỗi lần load trang).
+
+  Bảng: orders
+  ┌───────────────┬──────────────────────────────────────────┐
+  │ Cột           │ Mô tả                                    │
+  ├───────────────┼──────────────────────────────────────────┤
+  │ id            │ PK, AUTO_INCREMENT (mã đơn: #FS-XXXXXX)  │
+  │ customer_name │ Tên khách hàng                           │
+  │ email         │ Email (tùy chọn)                         │
+  │ phone         │ Số điện thoại                            │
+  │ address       │ Địa chỉ giao hàng                        │
+  │ payment_method│ 'cod' hoặc 'bank_transfer'               │
+  │ notes         │ Ghi chú giao hàng (TÙY CHỌN)             │
+  │ total_price   │ Tổng giá trị đơn hàng (DECIMAL 15,2)     │
+  │ created_at    │ Thời gian đặt hàng (TIMESTAMP)           │
+  └───────────────┴──────────────────────────────────────────┘
+
+  Bảng: order_details
+  ┌───────────────┬──────────────────────────────────────────┐
+  │ Cột           │ Mô tả                                    │
+  ├───────────────┼──────────────────────────────────────────┤
+  │ id            │ PK, AUTO_INCREMENT                       │
+  │ order_id      │ FK → orders(id) ON DELETE CASCADE        │
+  │ product_id    │ ID sản phẩm (không dùng FK cứng)         │
+  │ product_name  │ Tên sản phẩm tại thời điểm đặt           │
+  │ quantity      │ Số lượng                                  │
+  │ price         │ Đơn giá tại thời điểm đặt (DECIMAL 15,2) │
+  └───────────────┴──────────────────────────────────────────┘
+  ※ product_name lưu tên sp tại lúc đặt để tránh mất dữ liệu
+    khi sản phẩm bị xóa hoặc đổi tên về sau.
 
 
 ────────────────────────────────────────────────────────────────
  VI. GIỎ HÀNG (SESSION-BASED)
 ────────────────────────────────────────────────────────────────
 
-  Giỏ hàng được lưu trong $_SESSION['cart'], không cần CSDL.
+  Giỏ hàng lưu trong $_SESSION['cart'], không cần CSDL.
 
   Cấu trúc:
     $_SESSION['cart'] = [
@@ -295,62 +412,153 @@ Cơ chế:
         ...
     ]
 
-  Luồng:
-    Thêm vào giỏ → Cập nhật session['cart']
-    Xem giỏ      → Tính tổng tiền từ session
-    Checkout      → Đọc session, hiển thị form giao hàng
-    Đặt hàng      → Xóa giỏ, chuyển sang success.php
+  Nghiệp vụ:
+    addToCart($id)        → Thêm/tăng SL; redirect về trang trước
+    cart()                → Đọc session, render cart.php
+    updateCart()          → POST quantities[] → cập nhật/xóa nếu SL=0
+    removeFromCart($id)   → Xóa 1 sản phẩm khỏi giỏ
+    checkout()            → Đọc giỏ + lấy userInfo từ DB → checkout.php
+    processCheckout()     → Validate → createOrder() → clear cart → success
+    
+  Vòng đời:
+    Thêm vào giỏ  → session['cart'] được cập nhật
+    Cập nhật SL   → POST updateCart → session['cart'] thay đổi
+    Đặt hàng xong → unset(session['cart'])
 
 
 ────────────────────────────────────────────────────────────────
- VII. GIAO DIỆN (DESIGN SYSTEM)
+ VII. AUTO-FILL THÔNG TIN CHECKOUT
+────────────────────────────────────────────────────────────────
+
+  Khi người dùng đã đăng nhập và vào trang /Product/checkout:
+  
+  ProductController::checkout()
+    → isLoggedIn() == true
+    → AccountModel::getAccountByUsername($_SESSION['username'])
+       → SELECT * FROM account WHERE username = ?
+       → Trả về object (PDO::FETCH_OBJ): $userInfo
+    → Truyền $userInfo vào view checkout.php
+
+  checkout.php sử dụng:
+    Họ tên:   $userInfo->fullname  (hoặc $_POST nếu có lỗi form)
+    SĐT:      $userInfo->phone
+    Email:    $userInfo->email
+    Địa chỉ:  $userInfo->address
+
+  Ưu tiên:
+    1. $_POST[...] – nếu user đã submit form nhưng có lỗi validation
+    2. $userInfo->... – nếu là lần đầu vào trang (chưa submit)
+    3. '' – nếu chưa đăng nhập hoặc tài khoản chưa điền thông tin
+
+  Quan trọng:
+    - $userInfo là OBJECT (PDO::FETCH_OBJ), truy cập bằng ->field
+    - Dữ liệu query TRỰC TIẾP từ DB mỗi lần load → cập nhật DB là
+      checkout tự phản ánh ngay, không cần logout/login lại
+
+
+────────────────────────────────────────────────────────────────
+ VIII. GIAO DIỆN (DESIGN SYSTEM)
 ────────────────────────────────────────────────────────────────
 
   Theme: Dark Glassmorphism – Emerald Premium
   Font:  Inter + Space Grotesk (Google Fonts)
   CSS:   Vanilla CSS (không dùng Tailwind)
-  JS:    Vanilla JS + Bootstrap 4.5
+  JS:    Vanilla JS + Bootstrap 4.5.2
 
-  Màu chủ đạo:
-    Xanh Emerald  : #00d084  (primary)
-    Amber/Vàng    : #fbbf24  (accent / giá)
-    Đỏ nguy hiểm : #f87171  (danger / xóa)
-    Nền tối       : #060d0a  (background)
+  CSS Variables (định nghĩa trong header.php):
+    --primary:       #00d084  (xanh emerald)
+    --primary-dark:  #00a86b
+    --accent:        #fbbf24  (amber / giá tiền)
+    --danger:        #f87171  (xóa / cảnh báo)
+    --info:          #38bdf8  (chuyển khoản ngân hàng)
+    --bg-base:       #060d0a  (nền toàn trang)
+    --bg-card:       #111f18  (nền card)
+    --text-primary:  #e8f5f0  (chữ chính)
+    --text-muted:    #4d7a63  (chữ mờ)
+    --border-glass:  rgba(0,208,132,0.12)
 
-  Layout các trang:
-    header.php  → Navbar sticky + toàn bộ CSS design system
-    footer.php  → Footer đẹp + Bootstrap JS
-    Mỗi view    → Kế thừa header/footer, viết nội dung riêng
+  Layout chung:
+    header.php  → Navbar sticky + toàn bộ CSS Design System
+                   Override Bootstrap: .card, .btn, .table, .form-control
+    footer.php  → Footer + Bootstrap JS + jQuery
+    Mỗi view    → include header/footer, viết nội dung riêng
 
-  Trang nổi bật:
-    list.php    → Hero banner, stats chips, filter glass panel, product cards
-    show.php    → 2 cột: ảnh zoom | thông tin + giá + actions
-    add.php     → Form với drag-drop upload ảnh + preview
-    edit.php    → Tương tự add.php, theme amber (vàng)
-    register    → 2 section: Tài khoản + Liên hệ, layout 2 cột
-    login.php   → Card đơn giản, social auth icons
+  Các trang quan trọng:
+    list.php      → Hero banner, stats chips, glass filter panel, card lưới
+    show.php      → 2 cột: ảnh zoom trái | thông tin + giá + nút thêm giỏ
+    cart.php      → Dark table, qty control pill, summary card, toast notify
+    checkout.php  → Dark cards, autofill badge, payment options, summary sidebar
+    success.php   → Hero gradient, animated checkmark, invoice table, bank info
+    register.php  → 2 section: Thông tin tài khoản + Thông tin liên hệ
+    login.php     → Card đơn giản căn giữa
 
 
 ────────────────────────────────────────────────────────────────
- VIII. URL CÁC TRANG CHÍNH
+ IX. URL CÁC TRANG CHÍNH
 ────────────────────────────────────────────────────────────────
 
-  Trang chủ            : /CUAHANGTRAICAY/
-  Kho sản phẩm         : /CUAHANGTRAICAY/Product/
-  Chi tiết sản phẩm    : /CUAHANGTRAICAY/Product/show/{id}
-  Thêm sản phẩm        : /CUAHANGTRAICAY/Product/add
-  Sửa sản phẩm         : /CUAHANGTRAICAY/Product/edit/{id}
-  Xóa sản phẩm         : /CUAHANGTRAICAY/Product/delete/{id}
-  Giỏ hàng             : /CUAHANGTRAICAY/Product/cart
-  Thanh toán           : /CUAHANGTRAICAY/Product/checkout
-  Đặt hàng thành công  : /CUAHANGTRAICAY/Product/success
-  Đăng nhập            : /CUAHANGTRAICAY/account/login
-  Đăng ký              : /CUAHANGTRAICAY/account/register
-  Đăng xuất            : /CUAHANGTRAICAY/account/logout
-  Danh mục             : /CUAHANGTRAICAY/category/
+  Trang chủ                : /CUAHANGTRAICAY/
+  Kho sản phẩm             : /CUAHANGTRAICAY/Product/
+  Chi tiết sản phẩm        : /CUAHANGTRAICAY/Product/show/{id}
+  Thêm sản phẩm (admin)    : /CUAHANGTRAICAY/Product/add
+  Lưu sản phẩm (admin)     : /CUAHANGTRAICAY/Product/save      [POST]
+  Sửa sản phẩm (admin)     : /CUAHANGTRAICAY/Product/edit/{id}
+  Cập nhật sản phẩm(admin) : /CUAHANGTRAICAY/Product/update    [POST]
+  Xóa sản phẩm (admin)     : /CUAHANGTRAICAY/Product/delete/{id}
+  Thêm vào giỏ hàng        : /CUAHANGTRAICAY/Product/addToCart/{id}
+  Xem giỏ hàng             : /CUAHANGTRAICAY/Product/cart
+  Cập nhật giỏ hàng        : /CUAHANGTRAICAY/Product/updateCart [POST]
+  Xóa khỏi giỏ hàng        : /CUAHANGTRAICAY/Product/removeFromCart/{id}
+  Trang thanh toán          : /CUAHANGTRAICAY/Product/checkout
+  Xử lý đặt hàng           : /CUAHANGTRAICAY/Product/processCheckout [POST]
+  Đặt hàng thành công      : (include trực tiếp sau processCheckout)
+  Đăng nhập                : /CUAHANGTRAICAY/account/login
+  Xác thực đăng nhập       : /CUAHANGTRAICAY/account/checklogin [POST]
+  Đăng ký                  : /CUAHANGTRAICAY/account/register
+  Lưu tài khoản            : /CUAHANGTRAICAY/account/save      [POST]
+  Đăng xuất                : /CUAHANGTRAICAY/account/logout
+  Danh mục                 : /CUAHANGTRAICAY/category/
+
+
+────────────────────────────────────────────────────────────────
+ X. GHI CHÚ KỸ THUẬT QUAN TRỌNG
+────────────────────────────────────────────────────────────────
+
+  1. PDO ERRMODE_EXCEPTION bật trong database.php
+     → Mọi lỗi SQL đều throw exception, không âm thầm thất bại
+
+  2. OrderModel::createOrder() dùng TRANSACTION
+     → INSERT orders → INSERT order_details (nhiều dòng)
+     → Nếu bất kỳ bước nào lỗi → ROLLBACK toàn bộ
+
+  3. order_details KHÔNG có FK cứng vào bảng product
+     → Xóa sản phẩm không ảnh hưởng đến lịch sử đơn hàng
+     → product_name lưu tên sp tại thời điểm đặt hàng
+
+  4. Ảnh sản phẩm:
+     → Lưu vào /uploads/, tối đa 10MB
+     → Định dạng: jpg, jpeg, png, gif
+     → Khi sửa: giữ ảnh cũ nếu không upload mới
+
+  5. Giỏ hàng thuần Session (không DB):
+     → Xóa khi đặt hàng thành công (unset cart)
+     → Xóa khi session hết hạn / đóng trình duyệt
+
+  6. Auto-fill checkout:
+     → Dùng PDO::FETCH_OBJ → $userInfo là Object
+     → Truy cập: $userInfo->fullname, ->phone, ->email, ->address
+     → Query mỗi lần load trang (luôn đồng bộ với DB)
+
+  7. addToCart() redirect về HTTP_REFERER:
+     → Người dùng KHÔNG bị tự chuyển sang giỏ hàng
+     → Chỉ chuyển sang giỏ khi tự nhấn "Giỏ hàng" trên Navbar
+
+  8. processCheckout() khi lỗi:
+     → Load lại $userInfo từ DB để auto-fill vẫn hoạt động
+     → Hiển thị thông báo lỗi chi tiết (từ session order_error_debug)
 
 
 ================================================================
-  Tạo ngày: 2026-06-05 | Phiên bản: 1.0
-  Hệ thống: PHP 8.1 + MySQL + Laragon | Pattern: MVC thuần
+  Cập nhật: 2026-06-05 | Phiên bản: 2.0 (Hoàn chỉnh)
+  Hệ thống: PHP 8+ + MySQL 8.0 + Laragon | Pattern: MVC thuần
 ================================================================

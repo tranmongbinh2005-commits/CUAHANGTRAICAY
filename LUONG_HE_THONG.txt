@@ -21,7 +21,9 @@ CUAHANGTRAICAY/
     ├── controllers/
     │   ├── ProductController.php    ← Xử lý sản phẩm, giỏ hàng, đặt hàng
     │   ├── AccountController.php    ← Đăng ký, đăng nhập, đăng xuất
-    │   └── categoryController.php   ← Quản lý danh mục (CRUD)
+    │   ├── categoryController.php   ← Quản lý danh mục (CRUD)
+    │   ├── ProductApiController.php ← RESTful API quản lý sản phẩm
+    │   └── CategoryApiController.php← RESTful API quản lý danh mục
     ├── models/
     │   ├── ProductModel.php         ← CRUD bảng `product`
     │   ├── AccountModel.php         ← CRUD bảng `account`
@@ -65,6 +67,11 @@ Cơ chế:
   3. Khởi tạo class {Controller}Controller
   4. Gọi phương thức action($params)
   5. Controller load View tương ứng qua include
+
+Cơ chế API Routing (khi URL bắt đầu bằng /api/):
+  1. Chuyển hướng đến {Tên}ApiController.
+  2. Xác định phương thức dựa trên HTTP Method (GET, POST, PUT, DELETE).
+  3. Controller trả về dữ liệu dạng JSON.
 
 Hằng số BASE_URL được định nghĩa trong index.php,
 dùng cho tất cả href và Location redirect.
@@ -558,7 +565,33 @@ dùng cho tất cả href và Location redirect.
      → Hiển thị thông báo lỗi chi tiết (từ session order_error_debug)
 
 
+────────────────────────────────────────────────────────────────
+ IV. LUỒNG RESTful API (POSTMAN / TÍCH HỢP)
+────────────────────────────────────────────────────────────────
+
+Hệ thống cung cấp sẵn các API theo chuẩn RESTful để có thể can thiệp
+(thêm, sửa, xóa, lấy danh sách) từ Postman hoặc phần mềm bên thứ 3.
+
+1. API Sản phẩm (/api/product)
+   - Lấy danh sách   : GET    /api/product
+   - Lấy chi tiết    : GET    /api/product/{id}
+   - Thêm sản phẩm   : POST   /api/product (Payload JSON: name, description, price, category_id)
+   - Cập nhật        : PUT    /api/product/{id} (Payload JSON)
+   - Xóa sản phẩm    : DELETE /api/product/{id}
+
+2. API Danh mục (/api/category)
+   - Lấy danh sách   : GET    /api/category
+   - Lấy chi tiết    : GET    /api/category/{id}
+   - Thêm danh mục   : POST   /api/category (Payload JSON: name, description)
+   - Cập nhật        : PUT    /api/category/{id} (Payload JSON)
+   - Xóa danh mục    : DELETE /api/category/{id}
+
+Lưu ý: Luồng API này hoạt động độc lập và song song với giao diện Web (UI).
+Người dùng có thể vừa dùng web bình thường, vừa dùng Postman để thao tác API, 
+và thao tác trực tiếp trên Database. Tất cả đều đồng bộ ngay lập tức.
+
+
 ================================================================
-  Cập nhật: 2026-06-05 | Phiên bản: 2.0 (Hoàn chỉnh)
+  Cập nhật: 2026-06-12 | Phiên bản: 2.1 (Tích hợp RESTful API)
   Hệ thống: PHP 8+ + MySQL 8.0 + Laragon | Pattern: MVC thuần
 ================================================================

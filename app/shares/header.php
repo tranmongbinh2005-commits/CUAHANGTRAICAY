@@ -578,35 +578,60 @@
                 </li>
                 <?php endif; ?>
 
-                <?php if (SessionHelper::isLoggedIn()): ?>
-                <li class="nav-item ml-2">
+                <!-- Dynamic Auth Menu via JWT/Session -->
+                <li class="nav-item ml-2" id="nav-user" style="display: none;">
                     <span class="nav-link nav-user-chip">
                         <i class="fas fa-user-circle" style="color: var(--primary);"></i>
-                        <?= htmlspecialchars($_SESSION['username']) ?>
-                        <span style="opacity:0.5; font-size:0.78em;">(<?= htmlspecialchars(SessionHelper::getRole()) ?>)</span>
+                        <span id="nav-username">
+                            <?= SessionHelper::isLoggedIn() ? htmlspecialchars($_SESSION['username']) : 'User' ?>
+                        </span>
+                        <?php if (SessionHelper::isLoggedIn()): ?>
+                            <span style="opacity:0.5; font-size:0.78em; margin-left: 4px;">(<?= htmlspecialchars(SessionHelper::getRole()) ?>)</span>
+                        <?php endif; ?>
                     </span>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link nav-link-logout" href="<?= BASE_URL ?>account/logout">
+                <li class="nav-item" id="nav-logout" style="display: none;">
+                    <a class="nav-link nav-link-logout" href="#" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i> Đăng xuất
                     </a>
                 </li>
-                <?php else: ?>
-                <li class="nav-item">
+                
+                <li class="nav-item" id="nav-login">
                     <a class="nav-link" href="<?= BASE_URL ?>account/login">
                         <i class="fas fa-sign-in-alt"></i> Đăng nhập
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" id="nav-register">
                     <a class="nav-link" href="<?= BASE_URL ?>account/register">
                         <i class="fas fa-user-plus"></i> Đăng ký
                     </a>
                 </li>
-                <?php endif; ?>
 
             </ul>
         </div>
     </div>
 </nav>
+
+<script>
+function logout() {
+    localStorage.removeItem('jwtToken');
+    location.href = '<?= BASE_URL ?>account/logout';
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+        document.getElementById('nav-login').style.display = 'none';
+        document.getElementById('nav-register').style.display = 'none';
+        document.getElementById('nav-logout').style.display = 'block';
+        document.getElementById('nav-user').style.display = 'block';
+    } else {
+        document.getElementById('nav-login').style.display = 'block';
+        document.getElementById('nav-register').style.display = 'block';
+        document.getElementById('nav-logout').style.display = 'none';
+        document.getElementById('nav-user').style.display = 'none';
+    }
+});
+</script>
 
 <div class="container mt-4 content-wrapper">

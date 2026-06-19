@@ -650,4 +650,34 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Kiểm tra JWT Token
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        alert('Vui lòng đăng nhập để xem thông tin sản phẩm');
+        location.href = '<?= BASE_URL ?>account/login'; 
+        return;
+    }
+
+    // 2. Fix lỗi vị trí cuộn trang (Scroll Restoration) khi bấm Thêm vào giỏ
+    const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+    if (savedScrollPosition) {
+        window.scrollTo({
+            top: parseInt(savedScrollPosition),
+            behavior: 'instant'
+        });
+        sessionStorage.removeItem('scrollPosition');
+    }
+
+    // Lắng nghe sự kiện click vào các nút thêm giỏ hàng để lưu lại vị trí cuộn
+    const cartBtns = document.querySelectorAll('a[href*="addToCart"]');
+    cartBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+    });
+});
+</script>
+
 <?php include dirname(dirname(__DIR__)) . '/shares/footer.php'; ?>

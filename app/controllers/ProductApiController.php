@@ -2,24 +2,63 @@
 require_once('app/config/database.php');
 require_once('app/models/ProductModel.php');
 require_once('app/models/categoryModel.php');
+require_once('app/utils/JWTHandler.php');
 
 class ProductApiController
 {
     private $productModel;
     private $db;
+    private $jwtHandler;
 
     public function __construct()
     {
         $this->db = (new Database())->getConnection();
         $this->productModel = new ProductModel($this->db);
+        $this->jwtHandler = new JWTHandler();
     }
 
-    // Lấy danh sách sản phẩm
+    // Hàm xác thực token JWT khi truy cập API
+    private function authenticate()
+    {
+        // 1. Lấy tất cả thông tin Headers mà HTTP request gửi lên
+        $headers = apache_request_headers();
+        
+        // 2. Kiểm tra xem Client có gửi header 'Authorization' (chứa Token) không
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+            // Token JWT thường có cấu trúc: "Bearer <Chuỗi_Token_Dài>"
+            // Ta dùng khoảng trắng để tách lấy chuỗi Token phía sau chữ Bearer
+            $arr = explode(" ", $authHeader);
+            $jwt = $arr[1] ?? null; 
+            
+            if ($jwt) {
+                // 3. Giải mã Token. 
+                // Hàm decode sẽ tự động kiểm tra xem Token có hợp lệ, có bị sửa đổi hoặc hết hạn không.
+                $decoded = $this->jwtHandler->decode($jwt);
+                // Nếu giải mã thành công (trả về dữ liệu), tức là xác thực thành công (true)
+                return $decoded ? true : false;
+            }
+        }
+        // Nếu thiếu token hoặc token sai -> false
+        return false;
+    }
+
+    // Lấy danh sách sản phẩm (Bảo vệ bằng JWT)
     public function index()
     {
-        header('Content-Type: application/json');
-        $products = $this->productModel->getProducts();
-        echo json_encode($products);
+        // Gọi hàm kiểm tra xác thực JWT ở trên
+        if ($this->authenticate()) {
+            // --> ĐÃ CÓ TOKEN HỢP LỆ <--
+            // Trả về danh sách sản phẩm theo định dạng JSON
+            header('Content-Type: application/json');
+            $products = $this->productModel->getProducts();
+            echo json_encode($products);
+        } else {
+            // --> KHÔNG CÓ HOẶC TOKEN SAI <--
+            // Chặn truy cập, báo lỗi HTTP 401 Unauthorized để Postman/Web biết là chưa đăng nhập
+            http_response_code(401);
+            echo json_encode(['message' => 'Unauthorized']);
+        }
     }
 
     // Lấy thông tin sản phẩm theo ID

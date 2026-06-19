@@ -23,7 +23,7 @@
                 </div>
                 <?php endif; ?>
 
-                <form action="<?= BASE_URL ?>account/checklogin" method="post">
+                <form id="login-form">
 
                     <div class="auth-field mb-4">
                         <label for="username">Tên tài khoản</label>
@@ -222,5 +222,48 @@
 }
 .auth-footer-link a:hover { color: #39e75f; }
 </style>
+
+<script>
+// Lắng nghe sự kiện "submit" (khi người dùng bấm nút ĐĂNG NHẬP) của Form
+document.getElementById('login-form').addEventListener('submit', function(event) {
+    event.preventDefault(); // Chặn việc Form tải lại toàn bộ trang web (reload)
+
+    // Thu thập dữ liệu từ các ô input trong Form (username, password)
+    const formData = new FormData(this);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+        jsonData[key] = value;
+    });
+
+    // Sử dụng fetch() để gọi API đăng nhập theo chuẩn RESTful
+    fetch('<?= BASE_URL ?>account/checkLogin', {
+        method: 'POST', // Phương thức đẩy dữ liệu lên
+        headers: {
+            'Content-Type': 'application/json' // Báo cho Server biết ta đang gửi chuỗi JSON
+        },
+        body: JSON.stringify(jsonData) // Chuyển đổi dữ liệu form sang chuỗi JSON
+    })
+    .then(response => response.json()) // Phân tích kết quả Server trả về thành mảng/object Javascript
+    .then(data => {
+        // Nếu Server trả về có chứa 'token' (Tức là đăng nhập thành công)
+        if (data.token) {
+            // Lưu token JWT này vào kho lưu trữ cục bộ (localStorage) của trình duyệt
+            // Token này sẽ dùng làm "giấy thông hành" để gửi theo mỗi lần gọi API lấy danh sách
+            localStorage.setItem('jwtToken', data.token);
+            
+            // Chuyển hướng người dùng về trang hiển thị Sản phẩm
+            location.href = '<?= BASE_URL ?>Product';
+        } else {
+            // Nếu sai tài khoản mật khẩu, hiển thị thông báo lỗi
+            alert('Đăng nhập thất bại: ' + (data.message || 'Sai thông tin đăng nhập'));
+        }
+    })
+    .catch(error => {
+        // Xử lý khi kết nối bị lỗi hoặc Server lỗi
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi gọi API đăng nhập.');
+    });
+});
+</script>
 
 <?php include 'app/shares/footer.php'; ?>
